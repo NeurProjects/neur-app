@@ -341,6 +341,7 @@ const wallet = {
 
 const swap = {
   swapTokens: {
+    agentKit: null,
     displayName: '🪙 Swap Tokens',
     description: 'Swap tokens using Jupiter Exchange with the embedded wallet.',
     parameters: z.object({
@@ -355,15 +356,15 @@ const swap = {
         .optional()
         .describe('Slippage tolerance in basis points (0-10000)'),
     }),
-    execute: async ({
+    execute: async function ({
       inputMint,
       outputMint,
       amount,
       slippageBps = DEFAULT_OPTIONS.SLIPPAGE_BPS,
-    }: SwapParams): Promise<SwapResult> => {
+    }: SwapParams): Promise<SwapResult> {
       try {
-        const agentResponse = await retrieveAgentKit();
-        const agent = agentResponse?.data?.data?.agent;
+        const agent =
+          this.agentKit || (await retrieveAgentKit())?.data?.data?.agent;
 
         if (!agent) {
           throw new Error('Failed to retrieve agent');

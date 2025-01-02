@@ -85,6 +85,7 @@ function LaunchResult({ signature, mint, metadataUri }: LaunchResultProps) {
 
 export const pumpfunTools = {
   launchToken: {
+    agentKit: null,
     description: 'Launch a token on PumpFun',
     displayName: '💊 Deploy new token',
     parameters: z.object({
@@ -98,7 +99,7 @@ export const pumpfunTools = {
       twitter: z.string().optional().describe('The twitter url of the token'),
       telegram: z.string().optional().describe('The telegram url of the token'),
     }),
-    execute: async ({
+    execute: async function ({
       name,
       symbol,
       description,
@@ -116,10 +117,10 @@ export const pumpfunTools = {
       website?: string;
       twitter?: string;
       telegram?: string;
-    }) => {
+    }) {
       try {
-        const agentResponse = await retrieveAgentKit();
-        const agent = agentResponse?.data?.data?.agent;
+        const agent =
+          this.agentKit || (await retrieveAgentKit())?.data?.data?.agent;
 
         if (!agent) {
           return { success: false, error: 'Failed to retrieve agent' };

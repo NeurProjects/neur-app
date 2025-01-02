@@ -4,6 +4,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 
+import { actionTools } from './generic/action';
 import { jinaTools } from './generic/jina';
 import { utilTools } from './generic/util';
 import { definedTools } from './solana/defined-fi';
@@ -36,12 +37,13 @@ Critical Rules:
      - "The results are shown above"
      - "You can see the details above"
 - Always use the \`searchToken\` tool to get the correct token mint first and ask for user confirmation.
-- Always use the \`askForConfirmation\` tool to get user confirmation before executing tools that contain the parameter "requiresConfirmation" set to "true", or are potentially risky. After calling \`askForConfirmation\`:
+- Always use the \`askForConfirmation\` tool to get user confirmation before executing tools that contain the parameter "requiresConfirmation" set to "true", or contain "requiresConfirmation" in the description. After calling \`askForConfirmation\`:
      - STOP your response immediately
      - Wait for the user to explicitly reply with a confirmation or rejection
      - Only proceed with the tool execution in a NEW response after receiving an explicit confirmation
      - If rejected, acknowledge the rejection and stop
      - Never chain the confirmation request and the tool execution in the same response
+     - Never execute the tool before receiving the user response to the confirmation request
 
 Response Formatting:
 - Use proper line breaks between different sections of your response for better readability
@@ -71,6 +73,7 @@ export interface ToolConfig {
     params: z.infer<T extends z.ZodType ? T : never>,
   ) => Promise<any>;
   render?: (result: unknown) => React.ReactNode | null;
+  agentKit?: any;
   requiresConfirmation?: boolean;
 }
 
@@ -93,6 +96,7 @@ export function DefaultToolResultRenderer({ result }: { result: unknown }) {
 }
 
 export const defaultTools: Record<string, ToolConfig> = {
+  ...actionTools,
   ...solanaTools,
   ...definedTools,
   ...pumpfunTools,
