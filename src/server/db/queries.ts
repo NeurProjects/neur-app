@@ -82,6 +82,79 @@ export async function dbCreateMessages({
 }
 
 /**
+ * Updates the tool-call results for any toolCallIds
+ * in the provided `messageData.content` array.
+ *
+ * @param conversationId - The ID of the conversation
+ * @param messageData    - An object with role: "tool" and an array of tool-result items
+ * @returns An array of updated Messages or an empty array if no matches
+ */
+export async function updateToolCallResults(
+  conversationId: string,
+  messageData: {
+    role: 'tool';
+    content: Array<{
+      type: 'tool-result';
+      toolCallId: string;
+      toolName: string;
+      result: {
+        result: string; // e.g. "deny", "confirm"
+        message: string;
+      };
+    }>;
+  },
+): Promise<PrismaMessage[]> {
+  const updatedMessages: PrismaMessage[] = [];
+
+  for (const item of messageData.content) {
+    const toolCallId = item.toolCallId;
+    const newResultObj = item.result;
+    const toolMessages = await prisma.message.findMany({
+      where: {
+        conversationId,
+        role: 'tool',
+      },
+    });
+
+    let messageToUpdate: PrismaMessage | null = null;
+    for (const msg of toolMessages) {
+      const contentArray = msg.content as any[];
+      const hasMatchingToolCallId = contentArray.some(
+        (c) => c.toolCallId === toolCallId,
+      );
+      if (hasMatchingToolCallId) {
+        messageToUpdate = msg;
+        break;
+      }
+    }
+
+    if (!messageToUpdate) {
+      continue;
+    }
+
+    const oldContentArray = messageToUpdate.content as any[];
+    const newContentArray = oldContentArray.map((c) => {
+      if (c.toolCallId === toolCallId) {
+        return {
+          ...c,
+          result: newResultObj,
+        };
+      }
+      return c;
+    });
+
+    const updatedMessage = await prisma.message.update({
+      where: { id: messageToUpdate.id },
+      data: { content: newContentArray },
+    });
+
+    updatedMessages.push(updatedMessage);
+  }
+
+  return updatedMessages;
+}
+
+/**
  * Retrieves all messages for a specific conversation
  * @param {Object} params - The parameters object
  * @param {string} params.conversationId - The conversation ID to fetch messages for

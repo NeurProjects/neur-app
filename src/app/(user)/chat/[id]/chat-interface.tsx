@@ -29,6 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useWalletPortfolio } from '@/hooks/use-wallet-portfolio';
 import { uploadImage } from '@/lib/upload';
 import { cn, throttle } from '@/lib/utils';
+import { type ToolActionResult } from '@/types/util';
 
 // Types
 interface UploadingImage extends Attachment {
@@ -49,11 +50,17 @@ interface MessageAttachmentsProps {
   onPreviewImage: (preview: ImagePreview) => void;
 }
 
+interface ToolResult {
+  toolCallId: string;
+  result: any;
+}
+
 interface ChatMessageProps {
   message: Message;
   index: number;
   messages: Message[];
   onPreviewImage: (preview: ImagePreview) => void;
+  addToolResult: (result: ToolResult) => void;
 }
 
 interface AttachmentPreviewProps {
@@ -181,12 +188,27 @@ function MessageAttachments({
 
 function MessageToolInvocations({
   toolInvocations,
+  addToolResult,
 }: {
   toolInvocations: ToolInvocation[];
+  addToolResult: (result: ToolResult) => void;
 }) {
   return (
     <div className="space-y-px">
       {toolInvocations.map(({ toolCallId, toolName, displayName, result }) => {
+        const toolResult = result as ToolActionResult;
+        const addResultUtility = (result: {
+          result: string;
+          message: string;
+        }) => addToolResult({ toolCallId, result });
+        if (
+          toolName === 'askForConfirmation' &&
+          toolResult &&
+          toolResult.message &&
+          !toolResult.result
+        ) {
+          toolResult.addResultUtility = addResultUtility;
+        }
         const isCompleted = result !== undefined;
         const isError =
           isCompleted &&
@@ -246,6 +268,7 @@ function ChatMessage({
   index,
   messages,
   onPreviewImage,
+  addToolResult,
 }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const hasAttachments =
@@ -359,7 +382,10 @@ function ChatMessage({
         )}
 
         {message.toolInvocations && (
-          <MessageToolInvocations toolInvocations={message.toolInvocations} />
+          <MessageToolInvocations
+            toolInvocations={message.toolInvocations}
+            addToolResult={addToolResult}
+          />
         )}
       </div>
     </div>
@@ -551,17 +577,23 @@ export default function ChatInterface({
   id: string;
   initialMessages?: Message[];
 }) {
-  const { messages, input, handleSubmit, handleInputChange, isLoading } =
-    useChat({
-      id,
-      initialMessages,
-      body: { id },
-      onFinish: () => {
-        window.history.replaceState({}, '', `/chat/${id}`);
-        // Refresh wallet portfolio after AI response
-        refresh();
-      },
-    });
+  const {
+    messages,
+    input,
+    handleSubmit,
+    handleInputChange,
+    isLoading,
+    addToolResult,
+  } = useChat({
+    id,
+    initialMessages,
+    body: { id },
+    onFinish: () => {
+      window.history.replaceState({}, '', `/chat/${id}`);
+      // Refresh wallet portfolio after AI response
+      refresh();
+    },
+  });
 
   const [previewImage, setPreviewImage] = useState<ImagePreview | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -639,6 +671,7 @@ export default function ChatInterface({
                 index={index}
                 messages={messages}
                 onPreviewImage={setPreviewImage}
+                addToolResult={addToolResult}
               />
             ))}
             {isLoading &&

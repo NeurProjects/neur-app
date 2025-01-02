@@ -19,6 +19,30 @@ export function getMostRecentUserMessage(messages: Array<CoreMessage>) {
 }
 
 /**
+ *
+ * @param messages
+ * @returns  Most recent tool result message or undefined if none found
+ */
+export function getMostRecentToolResultMessage(messages: Array<CoreMessage>):
+  | {
+      role: 'tool';
+      content: any[];
+    }
+  | undefined {
+  const mostRecentMessage = messages.at(-1);
+  if (
+    mostRecentMessage &&
+    mostRecentMessage.role === 'tool' &&
+    mostRecentMessage.content &&
+    mostRecentMessage.content.length > 0 &&
+    mostRecentMessage.content[0].result
+  ) {
+    return mostRecentMessage;
+  }
+  return undefined;
+}
+
+/**
  * Sanitizes response messages by removing incomplete tool calls and empty content.
  * This function processes both tool messages and assistant messages to ensure
  * all tool calls have corresponding results and all content is valid.

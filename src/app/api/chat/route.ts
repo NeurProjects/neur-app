@@ -18,6 +18,7 @@ import {
 } from '@/ai/providers';
 import { MAX_TOKEN_MESSAGES } from '@/lib/constants';
 import {
+  getMostRecentToolResultMessage,
   getMostRecentUserMessage,
   sanitizeResponseMessages,
 } from '@/lib/utils/ai';
@@ -28,6 +29,7 @@ import {
   dbCreateMessages,
   dbDeleteConversation,
   dbGetConversation,
+  updateToolCallResults,
 } from '@/server/db/queries';
 
 export const maxDuration = 30;
@@ -55,6 +57,9 @@ export async function POST(req: Request) {
     const userMessage: CoreMessage | undefined =
       getMostRecentUserMessage(coreMessages);
 
+    const mostRecentToolResultMessage =
+      getMostRecentToolResultMessage(coreMessages);
+
     if (!userMessage) {
       return new Response('No user message found', { status: 400 });
     }
@@ -69,15 +74,19 @@ export async function POST(req: Request) {
       revalidatePath('/api/conversations');
     }
 
-    await dbCreateMessages({
-      messages: [
-        {
-          conversationId,
-          role: userMessage.role,
-          content: JSON.parse(JSON.stringify(userMessage)),
-        },
-      ],
-    });
+    if (mostRecentToolResultMessage) {
+      await updateToolCallResults(conversationId, mostRecentToolResultMessage);
+    } else {
+      await dbCreateMessages({
+        messages: [
+          {
+            conversationId,
+            role: userMessage.role,
+            content: JSON.parse(JSON.stringify(userMessage)),
+          },
+        ],
+      });
+    }
 
     // extract all attachments from the user message
     const attachments = messages
