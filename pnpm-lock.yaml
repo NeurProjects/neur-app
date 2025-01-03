@@ -88,6 +88,9 @@ importers:
       ai:
         specifier: ^4.0.20
         version: 4.0.20(react@19.0.0)(zod@3.24.1)
+      axios:
+        specifier: ^1.7.9
+        version: 1.7.9
       bs58:
         specifier: ^6.0.0
         version: 6.0.0
