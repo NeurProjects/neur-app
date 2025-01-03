@@ -4,7 +4,15 @@ This describes steps to spin up Neur.sh locally:
 
 ## Environment Variables
 
-You will need to sign up for [Privy](https://www.privy.io/) and create a development app, aslo have an [OpenAI](https://platform.openai.com/) or [Anthropic](https://www.anthropic.com/) API key. You also need to have
+You will need to sign up for [Privy](https://www.privy.io/) and create a development app.
+
+Choice of model provider:
+- [PPQ](https://www.ppq.ai/) API key
+- [Anthropic](https://www.anthropic.com/) API key
+- [OpenAI](https://platform.openai.com/) API key
+
+
+You also need to have
 
 - [ImgBB](https://api.imgbb.com/) API key for image uploads
 - [Jina AI](https://jina.ai/) API key for url retrieval
@@ -14,6 +22,8 @@ Create a `.env` file:
 ```
 # Secrets
 OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+OPENAI_BASE_URL=<YOUR_OPENAI_BASE_URL> # Recommended: https://api.ppq.ai
+OPENAI_MODEL_NAME=<YOUR_OPENAI_MODEL_NAME> # Recommended: claude-3.5-sonnet
 PRIVY_APP_SECRET=<YOUR_PRIVY_APP_SECRET>
 WALLET_ENCRYPTION_KEY=<YOUR_WALLET_ENCRYPTION_KEY>
 JINA_API_KEY=<YOUR_JINA_API_KEY>
