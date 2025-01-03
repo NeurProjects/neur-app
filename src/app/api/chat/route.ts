@@ -26,6 +26,7 @@ import { verifyUser } from '@/server/actions/user';
 import {
   dbCreateConversation,
   dbCreateMessages,
+  dbCreateTokenStat,
   dbDeleteConversation,
   dbGetConversation,
 } from '@/server/db/queries';
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
       revalidatePath('/api/conversations');
     }
 
-    await dbCreateMessages({
+    const newUserMessage = await dbCreateMessages({
       messages: [
         {
           conversationId,
@@ -144,14 +145,16 @@ export async function POST(req: Request) {
 
       maxSteps: 15,
       messages: relevantMessages,
-      async onFinish({ response }) {
+      async onFinish({ response, usage }) {
         if (!userId) return;
 
         try {
           const sanitizedResponses = sanitizeResponseMessages(
             response.messages,
           );
-          await dbCreateMessages({
+
+          // Create messages and get their IDs back
+          const messages = await dbCreateMessages({
             messages: sanitizedResponses.map((message) => {
               return {
                 conversationId,
@@ -160,6 +163,28 @@ export async function POST(req: Request) {
               };
             }),
           });
+
+          // Save the token stats
+          if (
+            messages &&
+            newUserMessage &&
+            !isNaN(usage.promptTokens) &&
+            !isNaN(usage.completionTokens) &&
+            !isNaN(usage.totalTokens)
+          ) {
+            const messageIds = newUserMessage
+              .concat(messages)
+              .map((message) => message.id);
+            const { promptTokens, completionTokens, totalTokens } = usage;
+
+            await dbCreateTokenStat({
+              userId,
+              messageIds,
+              promptTokens,
+              completionTokens,
+              totalTokens,
+            });
+          }
 
           revalidatePath('/api/conversations');
         } catch (error) {

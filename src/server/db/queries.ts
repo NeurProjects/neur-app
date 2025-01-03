@@ -69,7 +69,7 @@ export async function dbCreateMessages({
   messages: Omit<PrismaMessage, 'id' | 'createdAt'>[];
 }) {
   try {
-    return await prisma.message.createMany({
+    return await prisma.message.createManyAndReturn({
       data: messages as Prisma.MessageCreateManyInput[],
     });
   } catch (error) {
@@ -160,5 +160,36 @@ export async function dbGetConversations({ userId }: { userId: string }) {
       error,
     });
     return [];
+  }
+}
+
+export async function dbCreateTokenStat({
+  userId,
+  messageIds,
+  totalTokens,
+  promptTokens,
+  completionTokens,
+}: {
+  userId: string;
+  messageIds: string[];
+  totalTokens: number;
+  promptTokens: number;
+  completionTokens: number;
+}) {
+  try {
+    return await prisma.tokenStat.create({
+      data: {
+        userId,
+        messageIds,
+        totalTokens,
+        promptTokens,
+        completionTokens,
+      },
+    });
+  } catch (error) {
+    console.error('[DB Error] Failed to create token stats:', {
+      error,
+    });
+    return null;
   }
 }

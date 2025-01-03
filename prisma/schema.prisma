@@ -18,6 +18,7 @@ model User {
 
   wallets       Wallet[]
   conversations Conversation[]
+  tokenStats    TokenStat[]
 
   @@map("users")
 }
@@ -60,6 +61,21 @@ model Message {
   conversation Conversation @relation(fields: [conversationId], references: [id])
 
   @@map("messages")
+}
+
+model TokenStat {
+  id                  String   @id @default(cuid())
+  userId              String
+  messageIds          String[]
+  promptTokens        Int
+  completionTokens    Int
+  totalTokens         Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("token_stats")
 }
 
 enum Visibility {

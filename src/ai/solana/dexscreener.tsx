@@ -124,6 +124,15 @@ const OrdersResult = ({ orders }: { orders: DexScreenerOrder[] }) => {
 };
 
 const TokenProfile = ({ pair }: { pair: DexScreenerPair }) => {
+  if (!pair) {
+    return (
+      <Card className="bg-muted/50 p-4">
+        <p className="text-sm text-muted-foreground">
+          Token not found on DexScreener.
+        </p>
+      </Card>
+    );
+  }
   return (
     <Card className="space-y-4 bg-muted/50 p-4">
       <div className="flex items-center gap-3">
@@ -372,8 +381,6 @@ export const dexscreenerTools = {
           },
         );
 
-        console.log(response);
-
         if (!response.ok) {
           throw new Error(
             `Failed to fetch token profile: ${response.statusText}`,
@@ -382,7 +389,7 @@ export const dexscreenerTools = {
 
         const data = (await response.json()) as DexScreenerPairResponse;
 
-        if (!data.pairs.length) {
+        if (data.pairs === null || !data.pairs.length) {
           throw new Error('No pair data found');
         }
 
@@ -395,9 +402,10 @@ export const dexscreenerTools = {
           data: sortedPairs[0],
         };
       } catch (error) {
-        throw new Error(
-          `Failed to get token profile: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        );
+        return {
+          suppressFollowUp: false,
+          data: null,
+        };
       }
     },
     render: (raw: unknown) => {

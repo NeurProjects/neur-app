@@ -369,26 +369,14 @@ const swap = {
           throw new Error('Failed to retrieve agent');
         }
 
-        // temporary fix for agent kit
-        // if inputMint != So11111111111111111111111111111111111111112
-        // decimals = 6
-        // else
-        // decimals = 9
-        const decimals =
-          inputMint === 'So11111111111111111111111111111111111111112'
-            ? 10 ** 9
-            : 10 ** 6;
-
-        const fixedAmount = (amount * decimals) / LAMPORTS_PER_SOL;
-
         console.log('[swapTokens] inputMint', inputMint);
         console.log('[swapTokens] outputMint', outputMint);
-        console.log('[swapTokens] fixedAmount', fixedAmount);
+        console.log('[swapTokens] amount', amount);
         console.log('[swapTokens] slippageBps', slippageBps);
 
         const signature = await agent.trade(
           new PublicKey(outputMint),
-          fixedAmount,
+          amount,
           new PublicKey(inputMint),
           slippageBps,
         );

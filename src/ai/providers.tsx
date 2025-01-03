@@ -21,6 +21,7 @@ const claude35Sonnet = anthropic('claude-3-5-sonnet-20241022');
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
   apiKey: process.env.OPENAI_API_KEY,
+  compatibility: 'strict',
 });
 const gpt4o = openai('gpt-4o');
 

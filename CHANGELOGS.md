@@ -1,5 +1,10 @@
 # Changelogs
 
+## v0.1.10
+
+- Message token tracking (model usage) for backend analysis
+- Fixes to solana-agent-kit implementation for decimal handling
+
 ## v0.1.9
 
 - Use correct messages when trimming the message context for gpt4o

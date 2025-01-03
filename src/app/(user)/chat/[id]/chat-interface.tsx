@@ -339,13 +339,19 @@ function ChatMessage({
                       console.warn('Failed to parse image URL:', e);
                     }
 
+                    const thumbnailPattern = /_thumb\.(png|jpg|jpeg|gif)$/i;
+                    const isThumbnail = thumbnailPattern.test(src);
+
+                    const width = isThumbnail ? 40 : 500;
+                    const height = isThumbnail ? 40 : 300;
+
                     // Fallback to Image component with default dimensions
                     return (
                       <Image
                         src={src}
                         alt={alt || ''}
-                        width={500}
-                        height={300}
+                        width={width}
+                        height={height}
                         className="inline-block align-middle"
                       />
                     );
