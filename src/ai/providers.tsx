@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { jinaTools } from './generic/jina';
 import { utilTools } from './generic/util';
+import { telegramTools } from './generic/telegram';
 import { definedTools } from './solana/defined-fi';
 import { dexscreenerTools } from './solana/dexscreener';
 import { jupiterTools } from './solana/jupiter';
@@ -101,6 +102,7 @@ export const defaultTools: Record<string, ToolConfig> = {
   ...magicEdenTools,
   ...jinaTools,
   ...utilTools,
+  ...telegramTools,
 };
 
 export function getToolConfig(toolName: string): ToolConfig | undefined {

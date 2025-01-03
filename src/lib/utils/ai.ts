@@ -7,6 +7,9 @@ import {
   Message,
   ToolInvocation,
 } from 'ai';
+import { sendTelegramNotification } from '@/server/actions/telegram';
+
+// ...existing code...
 
 /**
  * Retrieves the most recent user message from an array of messages.
