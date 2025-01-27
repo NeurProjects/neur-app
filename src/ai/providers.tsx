@@ -137,7 +137,7 @@ export function DefaultToolResultRenderer({ result }: { result: unknown }) {
   );
 }
 
-export const defaultTools: Record<string, ToolConfig> = {
+export const Tools: Record<string, ToolConfig> = {
   ...actionTools,
   ...solanaTools,
   ...definedTools,
@@ -151,6 +151,23 @@ export const defaultTools: Record<string, ToolConfig> = {
   ...telegramTools,
   ...birdeyeTools,
 };
+
+
+export function filterTools(tools: Record<string, ToolConfig>): Record<string, ToolConfig> {
+  const disabledTools = process.env.NEXT_PUBLIC_DISABLED_TOOLS ? JSON.parse(process.env.NEXT_PUBLIC_DISABLED_TOOLS) : [];
+  console.log("ENV DISABLED TOOLS:");
+  console.log(disabledTools);
+  return Object.fromEntries(
+    Object.entries(tools).filter(([toolName, toolConfig]) => {
+      if (disabledTools.includes(toolName)) {
+        return false;
+      }
+      return true;
+    })
+  );
+}
+
+export const defaultTools = filterTools(Tools);
 
 export const coreTools: Record<string, ToolConfig> = {
   ...actionTools,
