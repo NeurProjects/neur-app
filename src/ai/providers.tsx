@@ -117,6 +117,7 @@ export interface ToolConfig {
   agentKit?: any;
   userId?: any;
   requiresConfirmation?: boolean;
+  requiredEnvVars?: string[];
 }
 
 export function DefaultToolResultRenderer({ result }: { result: unknown }) {
@@ -151,23 +152,48 @@ export const Tools: Record<string, ToolConfig> = {
   ...telegramTools,
   ...birdeyeTools,
 };
+const publicEnvVars: Record<string, string | undefined> = {
+  NEXT_PUBLIC_JINA_API_KEY: process.env.NEXT_PUBLIC_JINA_API_KEY,
+  NEXT_PUBLIC_CG_API_KEY: process.env.NEXT_PUBLIC_CG_API_KEY,
+  NEXT_PUBLIC_CG_BASE_URL: process.env.NEXT_PUBLIC_CG_BASE_URL,
+  NEXT_PUBLIC_TELEGRAM_BOT_TOKEN: process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN,
+  NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME,
+  NEXT_PUBLIC_MAINTENANCE_MODE: process.env.NEXT_PUBLIC_MAINTENANCE_MODE,
+  NEXT_PUBLIC_DEBUG_MODE: process.env.NEXT_PUBLIC_DEBUG_MODE,
+  NEXT_PUBLIC_PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
+  NEXT_PUBLIC_IMGBB_API_KEY: process.env.NEXT_PUBLIC_IMGBB_API_KEY,
+  NEXT_PUBLIC_EAP_RECEIVE_WALLET_ADDRESS: process.env.NEXT_PUBLIC_EAP_RECEIVE_WALLET_ADDRESS,
+  NEXT_PUBLIC_HELIUS_RPC_URL: process.env.NEXT_PUBLIC_HELIUS_RPC_URL,
+  NEXT_PUBLIC_BIRDEYE_API_KEY: process.env.NEXT_PUBLIC_BIRDEYE_API_KEY,
+};
 
 
 export function filterTools(tools: Record<string, ToolConfig>): Record<string, ToolConfig> {
   const disabledTools = process.env.NEXT_PUBLIC_DISABLED_TOOLS ? JSON.parse(process.env.NEXT_PUBLIC_DISABLED_TOOLS) : [];
   console.log("ENV DISABLED TOOLS:");
   console.log(disabledTools);
+  
   return Object.fromEntries(
     Object.entries(tools).filter(([toolName, toolConfig]) => {
       if (disabledTools.includes(toolName)) {
         return false;
+      }
+      if(toolConfig.requiredEnvVars){
+        for (const envVar of toolConfig.requiredEnvVars) {
+          if(!publicEnvVars[envVar] || publicEnvVars[envVar] == ''){
+            console.log(toolName+" "+envVar);
+            return false;
+          }
+        }
       }
       return true;
     })
   );
 }
 
-export const defaultTools = filterTools(Tools);
+export const defaultTools:Record<string, ToolConfig> = filterTools(Tools);
+
+console.log(Object.keys(defaultTools));
 
 export const coreTools: Record<string, ToolConfig> = {
   ...actionTools,

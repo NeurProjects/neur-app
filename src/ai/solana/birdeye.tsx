@@ -18,6 +18,7 @@ export const birdeyeTools = {
         .nativeEnum(BirdeyeTimeframe)
         .describe('The timeframe to search for'),
     }),
+    requiredEnvVars: ['NEXT_PUBLIC_BIRDEYE_API_KEY'],
     execute: async ({ timeframe }: { timeframe: BirdeyeTimeframe }) => {
       try {
         const traders = await getTopTraders({ timeframe });

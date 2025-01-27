@@ -35,11 +35,11 @@ WALLET_ENCRYPTION_KEY=<YOUR_WALLET_ENCRYPTION_KEY>
 HELIUS_API_KEY=<YOUR_HELIUS_API_KEY> # Helius SDK is used on the backend for smart transactions for swaps
 
 # Optional Secrets (tools might not work)
-JINA_API_KEY=<YOUR_JINA_API_KEY> # web scraping
-CG_API_KEY=<YOUR_COIN_GECKO_API_KEY> # charts
-CG_BASE_URL=<BASE_URL_FOR_COIN_GECKO> # there are different urls for demo vs pro
-TELEGRAM_BOT_TOKEN=<YOUR_TG_BOT_TOKEN> # sending notifications through telegram
-TELEGRAM_BOT_USERNAME=<YOUR_TG_BOT_USERNAME> # optional, but saves an API call
+NEXT_PUBLIC_JINA_API_KEY=<YOUR_JINA_API_KEY> # web scraping
+NEXT_PUBLIC_CG_API_KEY=<YOUR_COIN_GECKO_API_KEY> # charts
+NEXT_PUBLIC_CG_BASE_URL=<BASE_URL_FOR_COIN_GECKO> # there are different urls for demo vs pro
+NEXT_PUBLIC_TELEGRAM_BOT_TOKEN=<YOUR_TG_BOT_TOKEN> # sending notifications through telegram
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=<YOUR_TG_BOT_USERNAME> # optional, but saves an API call
 DISCORD_BOT_TOKEN=<YOUR_DISCORD_BOT_TOKEN> # used for discord integrations
 DISCORD_GUILD_ID=<YOUR_DISCORD_GUILD_ID> # used for a specific discord server
 DISCORD_ROLE_ID=<YOUR_DISCORD_ROLE_ID> # used for a specific discord role

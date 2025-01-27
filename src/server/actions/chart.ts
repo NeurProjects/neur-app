@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { TIMEFRAME } from '@/types/chart';
 
-const API_KEY = process.env.CG_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_CG_API_KEY;
 const BASE_URL =
   process.env.CG_BASE_URL || 'https://pro-api.coingecko.com/api/v3';
 

@@ -57,6 +57,7 @@ export const priceChartTool = {
   description:
     'Retrieves and displays price history for a Solana token via CoinGecko market data, falling back to DEX if unavailable.',
   parameters: chartToolParameters,
+  requiredEnvVars: ['NEXT_PUBLIC_CG_API_KEY'],
   execute: async ({
     contractAddress,
     timeFrame,
@@ -104,6 +105,7 @@ export const dexChartTool = {
   isExpandedByDefault: true,
   description: 'Retrieves and displays price history data from the DEX.',
   parameters: chartToolParameters,
+  requiredEnvVars: ['NEXT_PUBLIC_CG_API_KEY'],
   execute: async ({
     contractAddress,
     timeFrame,
