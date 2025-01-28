@@ -159,8 +159,6 @@ export function filterTools(
   const disabledTools = process.env.NEXT_PUBLIC_DISABLED_TOOLS
     ? JSON.parse(process.env.NEXT_PUBLIC_DISABLED_TOOLS)
     : [];
-  console.log('ENV DISABLED TOOLS:');
-  console.log(disabledTools);
 
   return Object.fromEntries(
     Object.entries(tools).filter(([toolName, toolConfig]) => {
@@ -170,7 +168,6 @@ export function filterTools(
       if(toolConfig.requiredEnvVars){
         for (const envVar of toolConfig.requiredEnvVars) {
           if(!process.env[envVar] || process.env[envVar] == ''){
-            console.log(toolName+" "+envVar);
             return false;
           }
         }
@@ -179,7 +176,6 @@ export function filterTools(
     }),
   );
 }
-// console.log(Object.keys(defaultTools));
 
 export const coreTools: Record<string, ToolConfig> = {
   ...actionTools,
