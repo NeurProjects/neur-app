@@ -103,7 +103,7 @@ export const telegramTools = {
     parameters: z.object({
       username: z.string().optional(),
     }),
-    requiredEnvVars: ['NEXT_PUBLIC_TELEGRAM_BOT_USERNAME'],
+    requiredEnvVars: ['TELEGRAM_BOT_USERNAME'],
     execute: async function ({ username }: { username?: string }) {
       try {
         const response = await verifyTelegramSetupAction({
@@ -152,8 +152,8 @@ export const telegramTools = {
       message: z.string(),
     }),
     requiredEnvVars: [
-      'NEXT_PUBLIC_TELEGRAM_BOT_TOKEN',
-      'NEXT_PUBLIC_TELEGRAM_BOT_USERNAME',
+      'TELEGRAM_BOT_TOKEN',
+      'TELEGRAM_BOT_USERNAME',
     ],
     execute: async function ({
       username,

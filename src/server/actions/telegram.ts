@@ -11,8 +11,8 @@ import { verifyUser } from './user';
 export const MISSING_USERNAME_ERROR = 'No saved Telegram username found';
 export const BOT_NOT_STARTED_ERROR = 'Bot not started yet';
 
-const TELEGRAM_BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN!;
-const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME;
 const GET_BOT_INFO_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`;
 const GET_UPDATES_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`;
 const SEND_MESSAGE_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-const API_KEY = process.env.NEXT_PUBLIC_CG_API_KEY;
-const BASE_URL = process.env.NEXT_PUBLIC_CG_BASE_URL || 'https://api.coingecko.com/api/v3';
+const API_KEY = process.env.CG_API_KEY;
+const BASE_URL = process.env.CG_BASE_URL || 'https://api.coingecko.com/api/v3';
 
 const tokenSchema = z.object({
   id: z.string(),

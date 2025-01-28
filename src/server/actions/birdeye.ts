@@ -55,7 +55,7 @@ export const getTopTraders = cache(
             revalidate: 300, // Cache for 5 minutes
           },
           headers: {
-            'X-API-KEY': process.env.NEXT_PUBLIC_BIRDEYE_API_KEY || '',
+            'X-API-KEY': process.env.BIRDEYE_API_KEY || '',
             'x-chain': 'solana',
           },
         },
