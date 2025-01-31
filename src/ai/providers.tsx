@@ -26,24 +26,23 @@ const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
   apiKey: process.env.OPENAI_API_KEY,
   compatibility: 'strict',
-  fetch: async (url, options) => {
-    const body = JSON.parse(options!.body! as string);
+  ...(process.env.OPENAI_BASE_URL?.includes('openrouter.ai') && {
+    fetch: async (url, options) => {
+      const body = JSON.parse(options.body);
 
-    // attach openrouter provider order to body
-    const modifiedBody = {
-      ...body,
-      provider: {
-        order: ['Anthropic', 'OpenAI'],
-        allow_fallbacks: false,
-      },
-    };
+      const modifiedBody = {
+        ...body,
+        provider: {
+          order: ['Anthropic', 'OpenAI'],
+          allow_fallbacks: false,
+        },
+      };
 
-    options!.body = JSON.stringify(modifiedBody);
+      options.body = JSON.stringify(modifiedBody);
 
-    // console.log(options!.body);
-
-    return await fetch(url, options);
-  },
+      return fetch(url, options);
+    },
+  }),
 });
 
 export const orchestratorModel = openai('gpt-4o-mini');

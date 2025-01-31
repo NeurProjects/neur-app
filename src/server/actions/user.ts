@@ -22,9 +22,11 @@ if (!PRIVY_APP_ID || !PRIVY_APP_SECRET) {
 }
 
 const PRIVY_SERVER_CLIENT = new PrivyClient(PRIVY_APP_ID, PRIVY_APP_SECRET, {
-  walletApi: {
-    authorizationPrivateKey: PRIVY_SIGNING_KEY,
-  },
+  ...(!!PRIVY_SIGNING_KEY && {
+    walletApi: {
+      authorizationPrivateKey: PRIVY_SIGNING_KEY,
+    },
+  }),
 });
 
 const getOrCreateUser = actionClient
