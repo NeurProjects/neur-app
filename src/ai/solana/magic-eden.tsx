@@ -10,8 +10,8 @@ interface MagicEdenStats {
   symbol: string;
   floorPrice: number;
   listedCount: number;
-  avgPrice24hr: number;
-  volumeAll: number;
+  avgPrice24hr?: number;
+  volumeAll?: number;
 }
 
 interface MagicEdenActivity {
@@ -141,7 +141,7 @@ const CollectionStats = ({ stats }: { stats: MagicEdenStats }) => {
             Avg Price (24h)
           </div>
           <div className="mt-1 text-xl font-semibold">
-            ◎ {formatSOL(stats.avgPrice24hr)}
+            ◎ {formatSOL(stats.avgPrice24hr ?? 0)}
           </div>
         </div>
         <div className="rounded-lg bg-background/50 p-3">
@@ -149,7 +149,7 @@ const CollectionStats = ({ stats }: { stats: MagicEdenStats }) => {
             Total Volume
           </div>
           <div className="mt-1 text-xl font-semibold">
-            ◎ {formatLargeNumber(stats.volumeAll)}
+            ◎ {formatLargeNumber(stats.volumeAll ?? 0)}
           </div>
         </div>
       </div>
