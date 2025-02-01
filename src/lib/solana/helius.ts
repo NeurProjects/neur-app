@@ -1,11 +1,17 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
+
+
 import { chunkArray } from '@/lib/utils';
 import rawKnownAddresses from '@/lib/utils/known-addresses.json';
+import { BundleTransaction } from '@/types/bundle';
 import { FungibleToken } from '@/types/helius/fungibleToken';
 import { NonFungibleToken } from '@/types/helius/nonFungibleToken';
 
+
+
 import { RPC_URL } from '../constants';
+
 
 export interface Holder {
   owner: string;
@@ -27,7 +33,9 @@ type HeliusMethod =
   | 'getBalance'
   | 'getTokenAccounts'
   | 'getAccountInfo'
-  | 'getMultipleAccounts';
+  | 'getMultipleAccounts'
+  | 'getSignaturesForAddress'
+  | 'getTransaction';
 
 const KNOWN_ADDRESSES: Record<string, string> = rawKnownAddresses as Record<
   string,
@@ -48,6 +56,11 @@ const fetchHelius = async (method: HeliusMethod, params: any) => {
       }),
     });
 
+    // Check for rate limiting response
+    if (response.status === 429) {
+      throw new Error('RATE_LIMIT_EXCEEDED');
+    }
+
     if (!response.ok) {
       throw new Error(
         `Helius API error: ${response.status} ${response.statusText}`,
@@ -63,6 +76,12 @@ const fetchHelius = async (method: HeliusMethod, params: any) => {
 
     return data;
   } catch (error) {
+    if (error instanceof Error && error.message === 'RATE_LIMIT_EXCEEDED') {
+      return {
+        status: 429,
+        error: 'Helius API request failed: Too many requests',
+      };
+    }
     if (error instanceof Error) {
       throw new Error(`Helius API request failed: ${error.message}`);
     }
@@ -400,4 +419,134 @@ export async function getHoldersClassification(
     totalHolders: holderMap.size,
     totalSupply,
   };
+}
+
+/**
+ * Get transaction history for a given mint address
+ * 1) Get signatures for the mint address
+ * 2) Get full transaction data for each signature
+ * 3) Return an array of transaction history
+ *
+ * @param mintAddress - The mint address to get transaction history for
+ * @param limit - The maximum number of transactions to return
+ * @returns An array of transaction history
+ */
+export async function getTransactionHistory(
+  mintAddress: string,
+  limit: number = 1000,
+) {
+  const transactions: BundleTransaction[] = [];
+
+  try {
+    // Getting all Signatures
+    let signaturesData: any[] = [];
+    let before: string | null = null;
+    let hasMoreSignatures = true;
+
+    while (hasMoreSignatures) {
+      const signatures = await fetchHelius('getSignaturesForAddress', [
+        mintAddress,
+        { limit, before },
+      ]);
+
+      if (signatures.result?.length === 0) {
+        hasMoreSignatures = false;
+        break;
+      }
+
+      signaturesData.push(...signatures.result);
+      before = signatures.result[signatures.result.length - 1].signature;
+    }
+
+    if (signaturesData.length === 0) {
+      return transactions;
+    }
+
+    // Wait for 1 second before fetching transactions to avoid rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Getting all Transactions
+    const signatures = signaturesData;
+    const batchSize = 100;
+
+    for (let i = 0; i < signatures.length; ) {
+      try {
+        const batch = signatures.slice(i, i + batchSize).map((sig) => ({
+          jsonrpc: '2.0',
+          id: 'request-id',
+          method: 'getTransaction',
+          params: [sig.signature, { maxSupportedTransactionVersion: 0 }],
+        }));
+
+        // Fetch batch of transactions
+        const response = await fetch(RPC_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(batch),
+        });
+
+        if (response.status === 429) {
+          console.log('[getTransactionHistory] tx.status', response.status);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        if (!response.ok) {
+          console.error('Failed to fetch transaction data', response);
+          continue;
+        }
+
+        const txData = await response.json();
+
+        if (!txData || !Array.isArray(txData)) {
+          console.error('Failed to fetch transaction data');
+          continue;
+        }
+
+        if (txData[0]?.result?.status === 429) {
+          console.log('[getTransactionHistory] tx.status', txData[0].status);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        for (const txResult of txData) {
+          const tx = txResult.result;
+
+          if (!tx) continue;
+
+          const preBalance = tx.meta?.preBalances?.[0];
+          const postBalance = tx.meta?.postBalances?.[0];
+          const price =
+            preBalance !== postBalance
+              ? (postBalance - preBalance) / Math.pow(10, 9) // Adjust for token decimals
+              : 0;
+
+          // Calculate quantity from postTokenBalances
+          const quantity =
+            preBalance !== postBalance ? postBalance - preBalance : 0;
+
+          transactions.push({
+            signature: tx.transaction.signatures[0],
+            slot: tx.slot,
+            timestamp: tx.blockTime ? tx.blockTime * 1000 : Date.now(),
+            quantity,
+            price,
+            buyer: tx.meta?.postTokenBalances?.[0]?.owner,
+          });
+        }
+
+        i += batchSize;
+      } catch (error) {
+        console.error('Error processing batch:', error);
+      }
+    }
+
+    return transactions;
+  } catch (error) {
+    console.warn(
+      'Error in getTransactionHistory, returning partial results:',
+      error,
+    );
+    return transactions;
+  }
 }
