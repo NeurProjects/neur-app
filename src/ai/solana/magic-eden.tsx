@@ -347,6 +347,7 @@ export const magicEdenTools = {
       timeRange: z
         .enum(['1h', '1d', '7d', '30d'])
         .describe('Time range for popularity metrics'),
+      limit: z.number().min(1).default(5),
     }),
     execute: async ({
       timeRange,

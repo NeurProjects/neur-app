@@ -13,10 +13,11 @@ import {
   defaultModel,
   defaultSystemPrompt,
   defaultTools,
-  getToolsFromRequiredTools,
 } from '@/ai/providers';
+import { wrapTools } from '@/ai/tools';
 import prisma from '@/lib/prisma';
 import { isValidTokenUsage, logWithTiming } from '@/lib/utils';
+import { generateUUID } from '@/lib/utils/format';
 import {
   dbCreateMessages,
   dbCreateTokenStat,
@@ -101,9 +102,15 @@ export async function processAction(action: ActionWithUser) {
       }
     }
 
-    const tools = toolsRequired
-      ? getToolsFromRequiredTools(toolsRequired)
-      : defaultTools;
+    const tools = wrapTools(
+      {
+        extraData: {
+          walletAddress: activeWallet.publicKey,
+          askForConfirmation: false,
+        },
+      },
+      toolsRequired,
+    );
 
     const clonedTools = _.cloneDeep(tools);
     for (const toolName in clonedTools) {
@@ -193,6 +200,7 @@ export async function processAction(action: ActionWithUser) {
     const messages = await dbCreateMessages({
       messages: finalMessages.map((message) => {
         return {
+          id: generateUUID(),
           conversationId: action.conversationId,
           createdAt: message.createdAt,
           role: message.role,
@@ -280,6 +288,7 @@ export async function processAction(action: ActionWithUser) {
         await dbCreateMessages({
           messages: [
             {
+              id: generateUUID(),
               conversationId: action.conversationId,
               role: 'assistant',
               content: `I've paused action ${action.id} because it has not executed successfully in the last 24 hours.`,
@@ -301,6 +310,7 @@ export async function processAction(action: ActionWithUser) {
         await dbCreateMessages({
           messages: [
             {
+              id: generateUUID(),
               conversationId: action.conversationId,
               role: 'assistant',
               content: `I've paused action ${action.id} because it has failed to execute successfully more than ${ACTION_PAUSE_THRESHOLD} times.`,

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 import ChatInterface from '@/app/(user)/chat/[id]/chat-interface';
+import { DataStreamHandler } from '@/components/data-stream-handler';
 import { SavedPromptsMenu } from '@/components/saved-prompts-menu';
 import { Badge } from '@/components/ui/badge';
 import BlurFade from '@/components/ui/blur-fade';
@@ -688,6 +689,7 @@ export function HomeContent() {
           )}
         >
           <ChatInterface id={chatId} initialMessages={messages} />
+          <DataStreamHandler key={`data-stream-${chatId}-home`} id={chatId} />
         </div>
       )}
     </div>

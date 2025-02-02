@@ -1,6 +1,6 @@
 import { Action, Prisma, Message as PrismaMessage } from '@prisma/client';
-import { JsonValue } from '@prisma/client/runtime/library';
-import { tool } from 'ai';
+import { InputJsonValue, JsonValue } from '@prisma/client/runtime/library';
+import { ToolInvocation, tool } from 'ai';
 import _ from 'lodash';
 
 import prisma from '@/lib/prisma';
@@ -79,13 +79,13 @@ export async function dbCreateConversation({
 /**
  * Creates multiple messages in bulk
  * @param {Object} params - The parameters object
- * @param {Array<Omit<PrismaMessage, 'id' | 'createdAt'>>} params.messages - Array of message objects to create
+ * @param {Array<Omit<PrismaMessage, 'createdAt'>>} params.messages - Array of message objects to create
  * @returns {Promise<Prisma.BatchPayload | null>} The result of the bulk creation or null if it fails
  */
 export async function dbCreateMessages({
   messages,
 }: {
-  messages: Omit<PrismaMessage, 'id' | 'createdAt'>[];
+  messages: Omit<PrismaMessage, 'createdAt'>[];
 }) {
   try {
     // Update conversation last message timestamp
@@ -623,5 +623,51 @@ export async function dbDeleteSavedPrompt({ id }: { id: string }) {
     });
 
     return false;
+  }
+}
+
+export async function updateToolResultMessage({
+  messageId,
+  toolCallId,
+  updatedToolCallResults,
+}: {
+  messageId: string;
+  toolCallId: string;
+  updatedToolCallResults: any;
+}) {
+  try {
+    const result = await prisma.message.findUnique({
+      where: {
+        id: messageId,
+      },
+      select: {
+        toolInvocations: true,
+      },
+    });
+
+    if (!result?.toolInvocations) {
+      return null;
+    }
+
+    const updatedInvocations =
+      result.toolInvocations as unknown as Array<ToolInvocation>;
+    updatedInvocations.forEach((invocation) => {
+      if (invocation.toolCallId === toolCallId) {
+        if (invocation.state === 'result') {
+          invocation.result.result = updatedToolCallResults;
+        }
+      }
+    });
+    return await prisma.message.update({
+      where: {
+        id: messageId,
+      },
+      data: {
+        toolInvocations: updatedInvocations as unknown as InputJsonValue,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to update tool result message in database');
+    throw error;
   }
 }

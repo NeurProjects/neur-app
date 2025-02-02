@@ -10,47 +10,46 @@ import {
   searchJupiterTokens,
 } from '@/server/actions/jupiter';
 
-// Types
-interface JupiterToken {
-  address: string;
-  name: string;
-  symbol: string;
-  logoURI: string | null;
-}
+import { JupiterToken } from '../tools/search-token';
 
-function TokenCard({ token }: { token: JupiterToken }) {
+//
+
+export function TokenCard({
+  data: { success, result },
+}: {
+  data: { success: boolean; result?: JupiterToken };
+}) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-muted/50 p-4">
       <div className="flex items-center gap-3">
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl">
-          <Image
-            src={
-              token.logoURI ||
-              Placeholder.generate({ width: 40, height: 40, text: 'Token' })
-            }
-            alt={token.name}
-            className="object-cover"
-            fill
-            sizes="40px"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = Placeholder.generate({
-                width: 40,
-                height: 40,
-                text: token.symbol,
-              });
-            }}
-          />
+          {result?.logoURI && (
+            <Image
+              src={result.logoURI}
+              alt={result?.name ?? 'Token'}
+              className="object-cover"
+              fill
+              sizes="40px"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = Placeholder.generate({
+                  width: 40,
+                  height: 40,
+                  text: result?.symbol,
+                });
+              }}
+            />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-base font-medium">{token.name}</h3>
+            <h3 className="truncate text-base font-medium">{result?.name}</h3>
             <span className="shrink-0 rounded-md bg-background/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              {token.symbol}
+              {result?.symbol}
             </span>
           </div>
           <div className="mt-1 text-sm text-muted-foreground">
             <span className="font-mono">
-              {token.address.slice(0, 4)}...{token.address.slice(-4)}
+              {result?.mint.slice(0, 4)}...{result?.mint.slice(-4)}
             </span>
           </div>
         </div>
@@ -183,7 +182,10 @@ export const jupiterTools = {
       return (
         <div className="space-y-2">
           {typedResult.data.map((token) => (
-            <TokenCard key={token.address} token={token} />
+            <TokenCard
+              key={token.mint}
+              data={{ success: true, result: token }}
+            />
           ))}
         </div>
       );

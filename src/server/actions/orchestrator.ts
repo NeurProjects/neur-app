@@ -8,13 +8,9 @@ export async function getToolsFromOrchestrator(
   messages: Message[] | undefined,
   excludeConfirmationTool: boolean,
 ): Promise<{ usage: LanguageModelUsage; toolsRequired: string[] | undefined }> {
-  const system = excludeConfirmationTool
-    ? orchestrationPrompt.replace(/(requires confirmation)/g, '')
-    : orchestrationPrompt;
-
   const { object: toolsRequired, usage } = await generateObject({
     model: orchestratorModel,
-    system,
+    system: orchestrationPrompt,
     output: 'array',
     schema: z
       .string()
@@ -31,13 +27,9 @@ export async function getToolsFromOrchestrator(
   if (toolsRequired.length === 0) {
     return { usage, toolsRequired: undefined };
   } else {
-    const allTools = new Set(['searchToken', ...toolsRequired]);
-    const filteredTools = [...allTools].filter(
-      (tool) => tool !== 'askForConfirmation' || !excludeConfirmationTool,
-    );
     return {
       usage,
-      toolsRequired: filteredTools,
+      toolsRequired: [...new Set(toolsRequired)],
     };
   }
 }

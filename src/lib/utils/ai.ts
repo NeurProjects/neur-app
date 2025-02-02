@@ -1,13 +1,21 @@
+import { zodSchema } from '@ai-sdk/ui-utils';
 import {
   CoreAssistantMessage,
   CoreMessage,
   CoreToolMessage,
+  DataStreamWriter,
   Message,
+  Output,
+  createDataStreamResponse,
+  streamText,
 } from 'ai';
+import { z } from 'zod';
 
-import { convertUserResponseToBoolean } from '@/server/actions/ai';
-import { dbUpdateMessageToolInvocations } from '@/server/db/queries';
-import { ToolUpdate } from '@/types/util';
+import { openai } from '@/ai/providers';
+import { allTools, getToolUpdateParameters } from '@/ai/tools';
+import { updateToolResultMessage } from '@/server/db/queries';
+
+import { diffObjects, streamUpdate } from '../utils';
 
 export function getUnconfirmedConfirmationMessage(
   messages: Array<Message>,
@@ -30,6 +38,18 @@ type ToolMessageResult = {
   result?: string;
   message: string;
 };
+
+export type ResponseMessage = (CoreAssistantMessage | CoreToolMessage) & {
+  id: string;
+};
+
+export interface ToolUpdateMessage {
+  isDataCall: boolean;
+  toolCallId: string | undefined;
+  toolName: string | undefined;
+  toolCallResults: any | undefined;
+  messageIdToUpdate: string | undefined;
+}
 
 /**
  * Updates the content result of a confirmation tool message based on isConfirmed
@@ -161,60 +181,291 @@ export function getConfirmationResult(message: Message) {
   );
 }
 
-export async function handleConfirmation({
-  current,
-  unconfirmed,
-}: {
-  current: Message;
-  unconfirmed: Message | undefined;
-}): Promise<{ confirmationHandled: boolean; updates: ToolUpdate[] }> {
-  const result = getConfirmationResult(current);
+async function handleConfirmation(
+  dataStream: DataStreamWriter,
+  toolUpdateMessage: ToolUpdateMessage,
+  extraData?: {
+    userId: string;
+    conversationId: string;
+  },
+  updatedToolResults?: any,
+) {
+  const finalToolResults =
+    updatedToolResults ?? toolUpdateMessage.toolCallResults;
 
-  let invocations;
-  let isConfirmed = !!result; // True if result is truthy (both 'confirm' and 'deny' are truthy)
+  if (
+    !finalToolResults ||
+    finalToolResults.step !== 'confirmed' ||
+    !toolUpdateMessage.toolCallId ||
+    !toolUpdateMessage.messageIdToUpdate ||
+    !toolUpdateMessage.toolName
+  ) {
+    return;
+  }
+  const toolConfirmation = allTools[toolUpdateMessage.toolName]?.confirm;
+  if (!toolConfirmation) {
+    return;
+  }
 
-  // No unconfirmed message to handle
-  if (!unconfirmed) return { confirmationHandled: false, updates: [] };
+  dataStream.writeData({
+    type: 'stream-result-data',
+    status: 'streaming',
+    toolCallId: toolUpdateMessage.toolCallId ?? null,
+    content: {
+      step: 'processing',
+    },
+  });
 
-  if (current.role === 'user') {
-    // User sent a manual response to the confirmation prompt
-    isConfirmed = await convertUserResponseToBoolean(current.content);
+  let updatedToolCallResults = {
+    ...finalToolResults,
+  };
 
-    // Set the invocations to the result decided by convertUserResponseToBoolean
-    invocations = unconfirmed.toolInvocations?.map((inv) =>
-      inv.toolName === 'askForConfirmation'
-        ? {
-            ...inv,
-            result: {
-              result: isConfirmed ? 'confirm' : 'deny',
-              message: unconfirmed.content,
-            },
-            state: 'result' as any,
-          }
-        : inv,
+  try {
+    const { success, result } = await toolConfirmation(
+      finalToolResults,
+      extraData,
     );
-  } else if (!!result) {
-    // User confirmed the previous message via confirm button
-    invocations = current.toolInvocations;
+    console.log('result', result);
+    if (success && result) {
+      updatedToolCallResults = {
+        ...updatedToolCallResults,
+        ...result,
+        step: 'completed',
+      };
+      const updatedToolCall = diffObjects(
+        finalToolResults,
+        updatedToolCallResults,
+      );
+      streamUpdate({
+        stream: dataStream,
+        update: {
+          type: 'stream-result-data',
+          status: 'idle',
+          toolCallId: toolUpdateMessage.toolCallId ?? null,
+          content: {
+            ...updatedToolCall,
+          },
+        },
+      });
+    }
+
+    if (
+      toolUpdateMessage.messageIdToUpdate &&
+      toolUpdateMessage.toolCallId &&
+      updatedToolCallResults.step === 'completed'
+    ) {
+      await updateToolResultMessage({
+        messageId: toolUpdateMessage.messageIdToUpdate,
+        toolCallId: toolUpdateMessage.toolCallId,
+        updatedToolCallResults,
+      });
+    }
+  } catch (error) {
+    console.log(`${error}`);
+  }
+}
+
+export async function handleToolUpdateMessage(
+  toolUpdateMessage: ToolUpdateMessage,
+  message: Message,
+  extraData?: {
+    userId: string;
+    conversationId: string;
+  },
+) {
+  if (toolUpdateMessage.toolName === undefined) {
+    return;
   }
 
-  if (invocations) {
-    await dbUpdateMessageToolInvocations({
-      messageId: unconfirmed.id,
-      toolInvocations: JSON.parse(JSON.stringify(invocations)),
-    });
+  let updatedToolCall = {
+    ...toolUpdateMessage.toolCallResults,
+  };
 
-    // Update the unconfirmed message with the new tool invocations
-    unconfirmed.toolInvocations = invocations;
-  }
+  return createDataStreamResponse({
+    execute: async (dataStream) => {
+      if (
+        toolUpdateMessage.isDataCall &&
+        toolUpdateMessage.toolCallResults?.step === 'confirmed'
+      ) {
+        await handleConfirmation(dataStream, toolUpdateMessage, extraData);
+        return;
+      }
+      // Update the tool call with the data provided by the user
+      try {
+        if (!toolUpdateMessage.isDataCall) {
+          streamUpdate({
+            stream: dataStream,
+            update: {
+              type: 'stream-result-data',
+              status: 'streaming',
+              toolCallId: toolUpdateMessage.toolCallId!,
+              content: {
+                step: 'updating',
+              },
+            },
+          });
+          const toolUpdateParameters = getToolUpdateParameters(
+            toolUpdateMessage.toolName!,
+          );
+          if (!toolUpdateParameters) {
+            return;
+          }
+          const stringifiedToolParameters = JSON.stringify(
+            zodSchema(toolUpdateParameters).jsonSchema,
+          );
+          const { experimental_partialOutputStream: partialOutputStream } =
+            streamText({
+              model: openai('gpt-4o-mini', { structuredOutputs: true }),
+              system: `Update the tool call parameters with the data provided by the user.
+              Only set confirm to true if the user explicitly confirms with words such as "confirm" or "yes".
+              Only set canceled to true if the user explicitly cancels with words such as "cancel" or "no".
+              Do not set confirm or canceled to true if the user only requests to update parameters.
+              toolParameters schema: ${stringifiedToolParameters}
+                `,
+              messages: [
+                {
+                  role: 'user',
+                  content: JSON.stringify(toolUpdateMessage.toolCallResults),
+                },
+                message,
+              ],
+              experimental_telemetry: {
+                isEnabled: true,
+                functionId: 'stream-text',
+              },
+              experimental_output: Output.object({
+                schema: z.object({
+                  toolParameters: toolUpdateParameters,
+                  confirmed: z.boolean(),
+                  canceled: z.boolean(),
+                }),
+              }),
+              maxSteps: 5,
+            });
 
-  // Generate tool updates for the updated tool invocations
-  // isConfirmed is true if some result was truthy, check for 'deny' string here
-  const updates = (unconfirmed.toolInvocations || []).map((inv) => ({
-    type: 'tool-update' as const,
-    toolCallId: inv.toolCallId,
-    result: isConfirmed && result !== 'deny' ? 'confirm' : 'deny',
-  }));
+          for await (const delta of partialOutputStream) {
+            const step =
+              delta.confirmed || delta.canceled
+                ? delta.canceled
+                  ? 'canceled'
+                  : 'confirmed'
+                : 'awaiting-confirmation';
+            // const newToolCallResults = {
+            //   ...updatedToolCall,
+            //   ...delta.toolParameters,
+            //   step,
+            // };
 
-  return { confirmationHandled: isConfirmed, updates };
+            // const diff = diffObjects(updatedToolCall, newToolCallResults);
+            // streamUpdate({
+            //   stream: dataStream,
+            //   update: {
+            //     type: 'stream-result-data',
+            //     toolCallId: toolUpdateMessage.toolCallId!,
+            //     content: {
+            //       ...diff,
+            //       step: 'updating',
+            //     },
+            //   },
+            // });
+            // updatedToolCall = newToolCallResults;
+
+            updatedToolCall = {
+              ...updatedToolCall,
+              ...delta.toolParameters,
+              step,
+            };
+          }
+        }
+      } catch (error) {
+        console.log(`${error}`);
+      }
+
+      // // get only the updated data between toolCallResults and updatedToolCall
+      // const deltaUpdate = diffObjects(
+      //   toolUpdateMessage.toolCallResults,
+      //   updatedToolCall,
+      // );
+      streamUpdate({
+        stream: dataStream,
+        update: {
+          type: 'stream-result-data',
+          status: 'idle',
+          toolCallId: toolUpdateMessage.toolCallId!,
+          content: {
+            ...updatedToolCall,
+            step:
+              updatedToolCall.step === 'canceled'
+                ? 'canceled'
+                : 'awaiting-confirmation',
+          },
+        },
+      });
+
+      await updateToolResultMessage({
+        messageId: toolUpdateMessage.messageIdToUpdate!,
+        toolCallId: toolUpdateMessage.toolCallId!,
+        updatedToolCallResults: {
+          ...updatedToolCall,
+          step:
+            updatedToolCall.step === 'canceled'
+              ? 'canceled'
+              : 'awaiting-confirmation',
+        },
+      });
+
+      if (updatedToolCall.step === 'confirmed') {
+        await handleConfirmation(
+          dataStream,
+          toolUpdateMessage,
+          updatedToolCall,
+        );
+      }
+    },
+  });
+}
+
+export function getToolUpdateMessage(
+  message: Message,
+  existingMessages: Message[],
+): ToolUpdateMessage {
+  const isDataCall = message.role === 'data';
+  const dataMessage = isDataCall ? (message.data as any) : undefined;
+
+  const lastAssistantMessage =
+    existingMessages.length > 0
+      ? existingMessages.find(
+          (message) =>
+            message.role === 'assistant' &&
+            message.toolInvocations?.length &&
+            message.toolInvocations?.length > 0,
+        )
+      : null;
+  const toolInvocations = lastAssistantMessage?.toolInvocations;
+  const toolUpdate = toolInvocations?.at(-1);
+
+  const toolCallResults =
+    dataMessage?.result ??
+    (toolUpdate?.state === 'result' ? toolUpdate.result.result : undefined);
+
+  const toolCallId = dataMessage?.toolCallId ?? toolUpdate?.toolCallId;
+  const toolName = dataMessage?.toolName ?? toolUpdate?.toolName;
+  const messageIdToUpdate = dataMessage?.messageId ?? lastAssistantMessage?.id;
+  return {
+    isDataCall,
+    toolCallId,
+    toolName,
+    toolCallResults,
+    messageIdToUpdate,
+  };
+}
+
+export function getMessageIdFromAnnotations(message: Message) {
+  if (!message.annotations) return message.id;
+
+  const [annotation] = message.annotations;
+  if (!annotation) return message.id;
+
+  // @ts-expect-error messageIdFromServer is not defined in MessageAnnotation
+  return annotation.messageIdFromServer;
 }

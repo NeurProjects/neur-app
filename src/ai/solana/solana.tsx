@@ -589,6 +589,7 @@ const wallet = {
 
 const swap = {
   swapTokens: {
+    deprecated: true,
     agentKit: null,
     displayName: '🪙 Swap Tokens',
     description:

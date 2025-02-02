@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { DataStreamHandler } from '@/components/data-stream-handler';
 import { verifyUser } from '@/server/actions/user';
 import {
   dbGetConversation,
@@ -69,7 +70,12 @@ async function ChatData({ params }: { params: Promise<{ id: string }> }) {
     return notFound();
   }
 
-  return <ChatInterface id={id} initialMessages={messagesFromDB} />;
+  return (
+    <>
+      <ChatInterface id={id} initialMessages={messagesFromDB} />
+      <DataStreamHandler key={`data-stream-${id}-chat`} id={id} />
+    </>
+  );
 }
 
 /**
