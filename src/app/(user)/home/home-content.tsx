@@ -78,6 +78,7 @@ export function HomeContent() {
   const { user, isLoading: isUserLoading } = useUser();
   const [verifyingTx, setVerifyingTx] = useState<string | null>(null);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
+  const [showTrialBanner, setShowTrialBanner] = useState(true);
   const MAX_VERIFICATION_ATTEMPTS = 20;
 
   const { conversations, refreshConversations } = useConversations(user?.id);
@@ -343,11 +344,16 @@ export function HomeContent() {
     );
   }
 
+  const toggleTrialBanner = () => {
+    setShowTrialBanner((prev) => !prev);
+  };
+
   const RENDER_TRIAL_BANNER =
     IS_TRIAL_ENABLED &&
     !hasEAP &&
     !user?.subscription?.active &&
-    !meetsTokenBalance;
+    !meetsTokenBalance &&
+    showTrialBanner;
   const USER_HAS_TRIAL =
     IS_TRIAL_ENABLED &&
     !hasEAP &&
@@ -521,6 +527,9 @@ export function HomeContent() {
                     <RiTwitterXFill className="mr-2 h-4 w-4" />
                     Follow Updates
                   </Link>
+                  {IS_TRIAL_ENABLED && (
+                    <Button onClick={toggleTrialBanner}>View Trial</Button>
+                  )}
                   <Button
                     onClick={handlePurchase}
                     disabled={isProcessing}
@@ -641,12 +650,15 @@ export function HomeContent() {
                     <RiTwitterXFill className="mr-2 h-4 w-4" />
                     Follow Updates
                   </Link>
-                  <Link
-                    href="/account"
-                    className="flex items-center text-xs text-muted-foreground transition-colors hover:text-foreground sm:text-sm"
+                  <Button asChild>
+                    <Link href="/account">Manage Account</Link>
+                  </Button>
+                  <Button
+                    className="bg-teal-500/70 text-xs ring-offset-0 hover:bg-teal-500/90 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-teal-500/60 dark:hover:bg-teal-500/80 sm:text-sm"
+                    onClick={toggleTrialBanner}
                   >
-                    Manage Account
-                  </Link>
+                    View EAP
+                  </Button>
                 </div>
               </div>
             </Card>
