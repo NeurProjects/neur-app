@@ -12,6 +12,7 @@ import { telegramTools } from './generic/telegram';
 import { utilTools } from './generic/util';
 import { birdeyeTools } from './solana/birdeye';
 import { chartTools } from './solana/chart';
+import { cookietools } from './solana/cookie';
 import { definedTools } from './solana/defined-fi';
 import { dexscreenerTools } from './solana/dexscreener';
 import { jupiterTools } from './solana/jupiter';
@@ -157,6 +158,7 @@ export const defaultTools: Record<string, ToolConfig> = {
   ...chartTools,
   ...telegramTools,
   ...birdeyeTools,
+  ...cookietools,
 };
 
 export function filterTools(
@@ -236,6 +238,11 @@ export const toolsets: Record<
     tools: ['telegramTools'],
     description:
       'Tools for interacting with Telegram for notifications and messaging.',
+  },
+  cookieTools: {
+    tools: ['cookieTools'],
+    description:
+      'Tools for retrieving information about Solana AI Agents, and Tweets related to Agents.',
   },
 };
 
