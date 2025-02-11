@@ -326,7 +326,7 @@ export async function updateUser(data: UserUpdateData) {
     }
 
     // Extract referralCode from the input data
-    const { referralCode, ...updateFields } = data;
+    const { referralCode, degenMode } = data;
 
     // If referralCode is provided, validate and update referringUserId
     if (referralCode) {
@@ -357,7 +357,7 @@ export async function updateUser(data: UserUpdateData) {
       await prisma.user.update({
         where: { id: userId },
         data: {
-          ...updateFields,
+          degenMode,
           referringUserId: referringUser.id,
         },
       });
@@ -365,7 +365,9 @@ export async function updateUser(data: UserUpdateData) {
       // Update user without referral logic if no referralCode is provided
       await prisma.user.update({
         where: { id: userId },
-        data: updateFields,
+        data: {
+          degenMode,
+        },
       });
     }
 
