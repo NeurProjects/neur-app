@@ -117,23 +117,23 @@ export const bundleTools = {
         },
         {
           name: 'Total Bundles',
-          value: analysis.total_bundles,
+          value: analysis?.total_bundles ?? 'N/A',
         },
         {
           name: 'Total SOL Spent',
-          value: `${formatNumber(analysis.total_sol_spent)} SOL`,
+          value: analysis?.total_percentage_bundled ? `${analysis.total_percentage_bundled.toFixed(2)}%` : 'N/A',
         },
         {
           name: 'Bundled Total',
-          value: `${analysis.total_percentage_bundled.toFixed(2)}%`,
+          value: analysis?.total_percentage_bundled ? `${analysis.total_percentage_bundled.toFixed(2)}%` : 'N/A',
         },
         {
           name: 'Held Percentage',
-          value: `${analysis.total_holding_percentage.toFixed(2)}%`,
+          value: analysis?.total_holding_percentage ? `${analysis.total_holding_percentage.toFixed(2)}%` : 'N/A',
         },
         {
           name: 'Held Tokens',
-          value: formatNumber(analysis.total_holding_amount),
+          value: analysis?.total_holding_amount ? formatNumber(analysis.total_holding_amount) : 'N/A',
         },
         {
           name: 'Bonded',
