@@ -214,92 +214,92 @@ export const cookietools = {
       );
     },
   },
-  searchTweets: {
-    displayName: '🤖 X Search',
-    isCollapsible: true,
-    isExpandedByDefault: true,
-    description: 'Searches for recent tweets about a given topic',
-    parameters: z.object({
-      searchQuery: z
-        .string()
-        .describe('The search query to use, for input into Elasticsearch'),
-      fromDate: z
-        .string()
-        .optional()
-        .describe('The start date for the search query, in format YYYY-MM-DD'),
-      toDate: z
-        .string()
-        .optional()
-        .describe('The start date for the search query, in format YYYY-MM-DD'),
-      quantity: z
-        .number()
-        .optional()
-        .default(3)
-        .describe('The number of tweets to return'),
-    }),
-    requiredEnvVars: ['COOKIE_FUN_API_KEY'],
-    execute: async ({
-      searchQuery,
-      fromDate,
-      toDate,
-      quantity,
-    }: {
-      searchQuery: string;
-      fromDate?: string;
-      toDate?: string;
-      quantity?: number;
-    }) => {
-      try {
-        const tweets = await searchTweets({ searchQuery, fromDate, toDate });
+  // searchTweets: {
+  //   displayName: '🤖 X Search',
+  //   isCollapsible: true,
+  //   isExpandedByDefault: true,
+  //   description: 'Searches for recent tweets about a given topic',
+  //   parameters: z.object({
+  //     searchQuery: z
+  //       .string()
+  //       .describe('The search query to use, for input into Elasticsearch'),
+  //     fromDate: z
+  //       .string()
+  //       .optional()
+  //       .describe('The start date for the search query, in format YYYY-MM-DD'),
+  //     toDate: z
+  //       .string()
+  //       .optional()
+  //       .describe('The start date for the search query, in format YYYY-MM-DD'),
+  //     quantity: z
+  //       .number()
+  //       .optional()
+  //       .default(3)
+  //       .describe('The number of tweets to return'),
+  //   }),
+  //   requiredEnvVars: ['COOKIE_FUN_API_KEY'],
+  //   execute: async ({
+  //     searchQuery,
+  //     fromDate,
+  //     toDate,
+  //     quantity,
+  //   }: {
+  //     searchQuery: string;
+  //     fromDate?: string;
+  //     toDate?: string;
+  //     quantity?: number;
+  //   }) => {
+  //     try {
+  //       const tweets = await searchTweets({ searchQuery, fromDate, toDate });
 
-        if (!tweets.length) {
-          return {
-            success: false,
-            error: 'Tweets not found',
-          };
-        }
+  //       if (!tweets.length) {
+  //         return {
+  //           success: false,
+  //           error: 'Tweets not found',
+  //         };
+  //       }
 
-        return {
-          success: true,
-          data: tweets.slice(0, quantity || 3),
-          suppressFollowUp: true,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : 'Failed to get trending Tweets',
-        };
-      }
-    },
-    render: (result: unknown) => {
-      const typedResult = result as {
-        success: boolean;
-        data?: TweetData[];
-        error?: string;
-      };
+  //       return {
+  //         success: true,
+  //         data: tweets.slice(0, quantity || 3),
+  //         suppressFollowUp: true,
+  //       };
+  //     } catch (error) {
+  //       return {
+  //         success: false,
+  //         error:
+  //           error instanceof Error
+  //             ? error.message
+  //             : 'Failed to get trending Tweets',
+  //       };
+  //     }
+  //   },
+  //   render: (result: unknown) => {
+  //     const typedResult = result as {
+  //       success: boolean;
+  //       data?: TweetData[];
+  //       error?: string;
+  //     };
 
-      if (!typedResult.success || !typedResult.data) {
-        return (
-          <div className="relative overflow-hidden rounded-2xl bg-destructive/5 p-4">
-            <div className="flex items-center gap-3">
-              <p className="text-sm text-destructive">
-                Error: {typedResult.error}
-              </p>
-            </div>
-          </div>
-        );
-      }
+  //     if (!typedResult.success || !typedResult.data) {
+  //       return (
+  //         <div className="relative overflow-hidden rounded-2xl bg-destructive/5 p-4">
+  //           <div className="flex items-center gap-3">
+  //             <p className="text-sm text-destructive">
+  //               Error: {typedResult.error}
+  //             </p>
+  //           </div>
+  //         </div>
+  //       );
+  //     }
 
-      return (
-        <div className="space-y-2">
-          {typedResult.data.map((tweet, index) => (
-            <CookieTweet key={index} tweetData={tweet} />
-          ))}
-        </div>
-      );
-    },
-  },
+  //     return (
+  //       <div className="space-y-2">
+  //         {typedResult.data.map((tweet, index) => (
+  //           <CookieTweet key={index} tweetData={tweet} />
+  //         ))}
+  //       </div>
+  //     );
+  //   },
+  // },
 };

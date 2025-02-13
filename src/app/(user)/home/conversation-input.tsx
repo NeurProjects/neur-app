@@ -291,7 +291,7 @@ export function ConversationInput({
               onChat ? 'Send a message...' : 'Start a new conversation...'
             }
             className={cn(
-              'min-h-[110px] max-h-[350px] overflow-y-scroll w-full resize-none border-0 bg-transparent px-4 py-3 text-base focus-visible:ring-0',
+              'max-h-[350px] min-h-[110px] w-full resize-none overflow-y-scroll border-0 bg-transparent px-4 py-3 text-base focus-visible:ring-0',
               attachments.length > 0 ? 'rounded-t-none' : 'rounded-t-xl',
             )}
           />

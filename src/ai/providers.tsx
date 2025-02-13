@@ -1,7 +1,5 @@
 import { ReactNode } from 'react';
 
-
-
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
@@ -11,9 +9,10 @@ import { Card } from '@/components/ui/card';
 import { actionTools } from './generic/action';
 import { jinaTools } from './generic/jina';
 import { telegramTools } from './generic/telegram';
+import { twitterTools } from './generic/twitter';
 import { utilTools } from './generic/util';
-import { bundleTools } from './solana/bundle';
 import { birdeyeTools } from './solana/birdeye';
+import { bundleTools } from './solana/bundle';
 import { chartTools } from './solana/chart';
 import { cookietools } from './solana/cookie';
 import { definedTools } from './solana/defined-fi';
@@ -166,6 +165,7 @@ export const defaultTools: Record<string, ToolConfig> = {
   ...bundleTools,
   ...birdeyeTools,
   ...cookietools,
+  ...twitterTools,
 };
 
 export function filterTools(

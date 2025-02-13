@@ -119,7 +119,7 @@ export default function CookieAgent({ agentData }: CookieAgentProps) {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Followers</span>
                 <span className="font-medium">
-                  {formatNumber(followersCount)}
+                  {formatNumber(followersCount, true)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -127,7 +127,7 @@ export default function CookieAgent({ agentData }: CookieAgentProps) {
                   Smart Followers
                 </span>
                 <span className="font-medium">
-                  {formatNumber(smartFollowersCount)}
+                  {formatNumber(smartFollowersCount, true)}
                 </span>
               </div>
             </div>
@@ -197,7 +197,8 @@ export default function CookieAgent({ agentData }: CookieAgentProps) {
                     {topTweets[0].tweetAuthorDisplayName}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {formatNumber(topTweets[0].impressionsCount)} impressions
+                    {formatNumber(topTweets[0].impressionsCount, true)}{' '}
+                    impressions
                   </p>
                   <a
                     href={topTweets[0].tweetUrl}

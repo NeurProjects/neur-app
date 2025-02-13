@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { formatNumber } from '@/lib/utils';
 import type { BundleAnalysisResponse, BundleDetails } from '@/types/bundle';
+
 import { CopyableText } from './ui/copyable-text';
 
 interface BundleListProps {
@@ -126,7 +127,9 @@ export function BundleList({ bundles }: BundleListProps) {
   const progress = ((currentPage + 1) / totalPages) * 100;
 
   // Sort bundles by total tokens
-  const sortedBundleEntries = bundleEntries.sort((a, b) => b[1].total_tokens - a[1].total_tokens);
+  const sortedBundleEntries = bundleEntries.sort(
+    (a, b) => b[1].total_tokens - a[1].total_tokens,
+  );
 
   return (
     <div className="space-y-6">

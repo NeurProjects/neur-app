@@ -18,7 +18,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatNumber(value: number): string {
+export function formatNumber(value: number, wholeNumbers = false): string {
   if (value >= 1_000_000_000) {
     return `${(value / 1_000_000_000).toFixed(2)}B`;
   }
@@ -28,7 +28,7 @@ export function formatNumber(value: number): string {
   if (value >= 1_000) {
     return `${(value / 1_000).toFixed(2)}K`;
   }
-  return value.toFixed(2);
+  return wholeNumbers ? value.toFixed(0) : value.toFixed(2);
 }
 
 /** Chunk an array into sub-arrays of size `chunkSize`. */
