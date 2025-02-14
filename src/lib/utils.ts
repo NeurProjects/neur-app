@@ -19,6 +19,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatNumber(value: number, wholeNumbers = false): string {
+  if (!value) return '0';
   if (value >= 1_000_000_000) {
     return `${(value / 1_000_000_000).toFixed(2)}B`;
   }

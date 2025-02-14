@@ -84,7 +84,56 @@ export const getTweetsByTag = async (tag: string, withinHours = 24) => {
       throw new Error('Failed to fetch tweets');
     }
 
-    const data = await response.json();
+    const data = (await response.json()).filter(
+      (t: Tweet) => t.url !== undefined,
+    );
+    return {
+      success: true,
+      result: data.sort((a: Tweet, b: Tweet) => b.viewCount - a.viewCount),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch tweets',
+    };
+  }
+};
+
+export const getTweetsFromAccount = async (
+  account: string,
+  withinHours = 24,
+  content?: string,
+) => {
+  const maxItems = 10;
+
+  const requestBody = {
+    maxItems,
+    min_faves: 1,
+    queryType: 'Top',
+    within_time: `${withinHours}h`,
+    from: account.replace('@', ''),
+    twitterContent: content,
+  };
+  try {
+    const response = await fetch(
+      `${TWITTER_ENDPOINT_URL}&maxItems=${maxItems}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch tweets');
+    }
+
+    const data = (await response.json()).filter(
+      (t: Tweet) => t.url !== undefined,
+    );
     return {
       success: true,
       result: data.sort((a: Tweet, b: Tweet) => b.viewCount - a.viewCount),
