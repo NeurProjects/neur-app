@@ -57,17 +57,14 @@ interface Author {
   isAutomated: boolean;
   automatedBy: string | null;
 }
-export const getTweetsByTag = async (tag: string) => {
+export const getTweetsByTag = async (tag: string, withinHours = 24) => {
   const maxItems = 10;
-  const since24h = `${new Date(Date.now() - 24 * 60 * 60 * 1000)
-    .toISOString()
-    .replace(/T/, '_')
-    .replace(/\..+/, '')}_UTC`;
+
   const requestBody = {
     maxItems,
     min_faves: 1,
     queryType: 'Top',
-    since: since24h,
+    within_time: `${withinHours}h`,
     twitterContent: tag,
   };
   try {

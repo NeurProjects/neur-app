@@ -13,13 +13,21 @@ export const twitterTools = {
         .describe(
           'The cashtag to saerch for. Must start with a $ such as $NEUR',
         ),
+      hoursAgo: z
+        .number()
+        .min(12)
+        .max(72)
+        .default(24)
+        .describe(
+          'The number of hours ago to search. Default is 24, max is 72',
+        ),
     }),
     isCollapsible: true,
     isExpandedByDefault: true,
     requiredEnvVars: ['TWITTER_ENDPOINT_URL'],
-    execute: async ({ tag }: { tag: string }) => {
+    execute: async ({ tag, hoursAgo }: { tag: string; hoursAgo: number }) => {
       try {
-        const response = await getTweetsByTag(tag);
+        const response = await getTweetsByTag(tag, hoursAgo);
 
         if (!response.success) {
           throw new Error(`Failed to get tweets`);
