@@ -132,7 +132,9 @@ export async function POST(req: Request) {
 
     // Filter out empty messages and ensure sorting by createdAt ascending
     const relevant = existingMessages
-      .filter((m) => m.content !== '')
+      .filter(
+        (m) => !(m.content === '' && (m.toolInvocations?.length ?? 0) === 0),
+      )
       .sort(
         (a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0),
       );

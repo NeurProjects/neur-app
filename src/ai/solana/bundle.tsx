@@ -56,10 +56,10 @@ export const bundleTools = {
       try {
         const analysis = await analyzeMintBundles({ mintAddress });
 
-        if (!analysis || !analysis.data) {
+        if (!analysis?.data) {
           return {
             success: false,
-            error: 'No data available',
+            error: 'Unable to fetch data. Please make sure it is a pump.fun launch.',
           };
         }
 
@@ -82,10 +82,7 @@ export const bundleTools = {
       } catch (error) {
         return {
           success: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : 'Failed to analyze bundles',
+          error: 'Unable to fetch data. Please make sure it is a pump.fun launch.',
         };
       }
     },
@@ -99,12 +96,12 @@ export const bundleTools = {
         error?: string;
       };
 
-      if (!typedResult.success || !typedResult.data) {
+      if (!typedResult.success || !typedResult.data?.analysis) {
         return (
-          <div className="relative overflow-hidden rounded-2xl bg-destructive/5 p-4">
+          <div className="relative overflow-hidden rounded-2xl bg-muted p-4">
             <div className="flex items-center gap-3">
-              <p className="text-sm text-destructive">
-                Error: {typedResult.error || 'No data available'}
+              <p className="text-md text-center">
+                {'Unable to fetch data. Please make sure it is a pump.fun token.'}
               </p>
             </div>
           </div>
@@ -113,45 +110,43 @@ export const bundleTools = {
 
       const { analysis, mintAddress } = typedResult.data;
 
-      const initalSummary = analysis
-        ? [
-            {
-              name: 'Ticker',
-              value: analysis.ticker.toUpperCase(),
-            },
-            {
-              name: 'Total Bundles',
-              value: analysis.total_bundles,
-            },
-            {
-              name: 'Total SOL Spent',
-              value: `${formatNumber(analysis.total_sol_spent)} SOL`,
-            },
-            {
-              name: 'Bundled Total',
-              value: `${analysis.total_percentage_bundled.toFixed(2)}%`,
-            },
-            {
-              name: 'Held Percentage',
-              value: `${analysis.total_holding_percentage.toFixed(2)}%`,
-            },
-            {
-              name: 'Held Tokens',
-              value: formatNumber(analysis.total_holding_amount),
-            },
-            {
-              name: 'Bonded',
-              value: analysis.bonded ? 'Yes' : 'No',
-            },
-          ]
-        : [];
+      const initialSummary = [
+        {
+          name: 'Ticker',
+          value: analysis?.ticker?.toUpperCase() || 'N/A',
+        },
+        {
+          name: 'Total Bundles',
+          value: analysis?.total_bundles ?? 'N/A',
+        },
+        {
+          name: 'Total SOL Spent',
+          value: analysis?.total_percentage_bundled ? `${analysis.total_percentage_bundled.toFixed(2)}%` : 'N/A',
+        },
+        {
+          name: 'Bundled Total',
+          value: analysis?.total_percentage_bundled ? `${analysis.total_percentage_bundled.toFixed(2)}%` : 'N/A',
+        },
+        {
+          name: 'Held Percentage',
+          value: analysis?.total_holding_percentage ? `${analysis.total_holding_percentage.toFixed(2)}%` : 'N/A',
+        },
+        {
+          name: 'Held Tokens',
+          value: analysis?.total_holding_amount ? formatNumber(analysis.total_holding_amount) : 'N/A',
+        },
+        {
+          name: 'Bonded',
+          value: analysis.bonded ? 'Yes' : 'No',
+        },
+      ];
 
       return (
         <div className="space-y-4">
           {/* Initial Summary */}
           <div className="rounded-lg bg-muted p-4">
             <div className="mx-auto grid grid-cols-2 gap-4 text-sm">
-              {initalSummary.map(({ name, value }, index) => (
+              {initialSummary.map(({ name, value }, index) => (
                 <div key={index}>
                   <p className="text-muted-foreground">{name}</p>
                   <p className="font-medium">{value}</p>
@@ -172,7 +167,13 @@ export const bundleTools = {
           </div>
 
           {/* Bundle Details */}
-          <BundleList bundles={analysis.bundles} />
+          {analysis?.bundles && Object.keys(analysis.bundles).length > 0 ? (
+            <BundleList bundles={analysis.bundles} />
+          ) : (
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="text-sm text-muted-foreground">No bundles detected</p>
+            </div>
+          )}
         </div>
       );
     },
