@@ -33,13 +33,11 @@ export const indicatorTools = {
             }
 
             if (result?.data?.success) {
-
                 return {
                     success: true,
-                    data: result.data,
+                    data: result.data.data,
                     suppressFollowUp: true,
                 };
-
             } else {
                 return {
                     success: false,

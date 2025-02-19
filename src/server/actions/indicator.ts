@@ -41,6 +41,9 @@ export const checkIndicatorsAction = actionClient
 
       const closingValues = getClosingValues(olhcvList , fromTimestamp);
 
+      if(closingValues.length === 0) {
+        return { success: false, error: 'No closing values found' };
+      }
         
       switch (indicator) {
         case 'rsi':
