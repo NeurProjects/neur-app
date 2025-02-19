@@ -98,7 +98,7 @@ export async function getPriceHistoryFromCG(
   return parsed.prices.map(([time, value]) => ({ time, value }));
 }
 
-async function getTokenPools(
+export async function getTokenPools(
   contractAddress: string,
   network: string = 'solana',
 ): Promise<string> {
@@ -121,13 +121,13 @@ async function getTokenPools(
   return topPoolId;
 }
 
-async function getDexOhlcv(
+export async function getDexOhlcv(
   poolId: string,
   network: string = 'solana',
   timeFrame: TIMEFRAME = TIMEFRAME.MINUTES,
   aggregator?: string,
   beforeTimestamp?: number,
-): Promise<{ time: number; value: number }[]> {
+): Promise<number[][]> {
   if (!API_KEY) throw new Error('API key not found');
   const path = mapTimeframeToDexPath(timeFrame);
   const agg = validateAggregator(timeFrame, aggregator);
@@ -143,12 +143,8 @@ async function getDexOhlcv(
   const parsed = dexOhlcvApiResponseSchema.parse(data);
   const ohlcvList = parsed.data.attributes.ohlcv_list;
 
-  const reversedOhlcv = ohlcvList.map(([timestamp, open, high, low, close]) => {
-    const price = close ?? open ?? 0;
-    return { time: timestamp * 1000, value: price };
-  });
-  reversedOhlcv.reverse();
-  return reversedOhlcv;
+  ohlcvList.reverse();
+  return ohlcvList;
 }
 
 export async function getDexPriceHistory(
@@ -159,13 +155,17 @@ export async function getDexPriceHistory(
   beforeTimestamp?: number,
 ): Promise<{ time: number; value: number }[]> {
   const topPoolId = await getTokenPools(contractAddress, network);
-  return getDexOhlcv(
+  const ohlcvList = await getDexOhlcv(
     topPoolId,
     network,
     timeFrame,
     aggregator,
     beforeTimestamp,
   );
+  return ohlcvList.map(([timestamp, open, high, low, close, volume]) => {
+    const price = close ?? open ?? 0;
+    return { time: timestamp * 1000, value: price };
+  });
 }
 
 export async function getPriceHistory(
