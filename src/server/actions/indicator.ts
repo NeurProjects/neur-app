@@ -45,17 +45,37 @@ function getClosingValues(olhcvList: number[][], fromTimestamp?: number): number
 function calculateIndicator(indicator: string, closingValues: number[], parameters: IndicatorParameters): number {
   switch (indicator) {
     case 'rsi':
-      return rsi(closingValues, { period: parameters.period || DEFAULT_PERIOD }).pop()!;
+      const rsiResult = rsi(closingValues, { period: parameters.period || DEFAULT_PERIOD });
+      const rsiValue = rsiResult[rsiResult.length - 1];
+      if(typeof rsiValue !== 'number') {
+        throw new Error('Failed to calculate RSI');
+      }
+      return rsiValue;
     case 'sma':
-      return sma(closingValues, { period: parameters.period || DEFAULT_PERIOD }).pop()!;
+      const smaResult = sma(closingValues, { period: parameters.period || DEFAULT_PERIOD });
+      const smaValue = smaResult[smaResult.length - 1];
+      if(typeof smaValue !== 'number') {
+        throw new Error('Failed to calculate SMA');
+      }
+      return smaValue;
     case 'bb':
-      return bb(closingValues, { period: parameters.period || DEFAULT_PERIOD }).upper.pop()!;
+      const bbResult = bb(closingValues, { period: parameters.period || DEFAULT_PERIOD });
+      const bbValue = bbResult.upper[bbResult.upper.length - 1];
+      if(typeof bbValue !== 'number') {
+        throw new Error('Failed to calculate BB');
+      }
+      return bbValue;
     case 'macd':
-      return macd(closingValues, {
+      const macdResult = macd(closingValues, {
         fast: parameters.fast || DEFAULT_MACD_FAST,
         slow: parameters.slow || DEFAULT_MACD_SLOW,
         signal: parameters.signal || DEFAULT_MACD_SIGNAL,
-      }).macdLine.pop()!;
+      });
+      const macdValue = macdResult.macdLine[macdResult.macdLine.length - 1];
+      if(typeof macdValue !== 'number') {
+        throw new Error('Failed to calculate MACD');
+      }
+      return macdValue;
     default:
       throw new Error('Unsupported indicator');
   }
