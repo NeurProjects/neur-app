@@ -13,6 +13,7 @@ import {
   defaultModel,
   defaultSystemPrompt,
   defaultTools,
+  getModelFromPreference,
   getToolsFromRequiredTools,
 } from '@/ai/providers';
 import prisma from '@/lib/prisma';
@@ -121,7 +122,7 @@ export async function processAction(action: ActionWithUser) {
     // Call the AI model
     logWithTiming(startTime, `[action:${action.id}] calling generateText`);
     const { response, usage } = await generateText({
-      model: defaultModel,
+      model: getModelFromPreference(action.user.modelPreference ?? undefined),
       system: systemPrompt,
       tools: clonedTools as Record<string, CoreTool<any, any>>,
       experimental_telemetry: {

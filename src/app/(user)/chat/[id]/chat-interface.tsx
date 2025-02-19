@@ -411,6 +411,9 @@ function ChatMessage({
     (_, alt, src, width, height) => `![${alt}](${src}#size=${width}x${height})`,
   );
 
+  // Some models have extra messages about tool outputs
+  const isToolOutputResponse = message.content?.startsWith('```tool_outputs');
+
   return (
     <div
       className={cn(
@@ -453,79 +456,85 @@ function ChatMessage({
             </div>
           )}
 
-          {message.content && (
-            <div
-              className={cn(
-                'relative flex flex-col gap-2 rounded-2xl px-4 py-3 text-sm shadow-sm',
-                isUser ? 'bg-primary' : 'bg-muted/60',
-              )}
-            >
+          {!isToolOutputResponse &&
+            message.content &&
+            message.content.trim() !== '' && (
               <div
                 className={cn(
-                  'prose prose-sm max-w-prose break-words leading-tight md:prose-base',
-                  isUser
-                    ? 'prose-invert dark:prose-neutral'
-                    : 'prose-neutral dark:prose-invert',
+                  'relative flex flex-col gap-2 rounded-2xl px-4 py-3 text-sm shadow-sm',
+                  isUser ? 'bg-primary' : 'bg-muted/60',
                 )}
               >
-                <ReactMarkdown
-                  rehypePlugins={[rehypeRaw]}
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: ({ node, ...props }) => (
-                      <a {...props} target="_blank" rel="noopener noreferrer" />
-                    ),
-                    img: ({ node, alt, src, ...props }) => {
-                      if (!src) return null;
-
-                      try {
-                        // Handle both relative and absolute URLs safely
-                        const url = new URL(src, 'http://dummy.com');
-                        const size = url.hash.match(/size=(\d+)x(\d+)/);
-
-                        if (size) {
-                          const [, width, height] = size;
-                          // Remove hash from src
-                          url.hash = '';
-                          return (
-                            <Image
-                              src={url.pathname + url.search}
-                              alt={alt || ''}
-                              width={Number(width)}
-                              height={Number(height)}
-                              className="inline-block align-middle"
-                            />
-                          );
-                        }
-                      } catch (e) {
-                        // If URL parsing fails, fallback to original src
-                        console.warn('Failed to parse image URL:', e);
-                      }
-
-                      const thumbnailPattern = /_thumb\.(png|jpg|jpeg|gif)$/i;
-                      const isThumbnail = thumbnailPattern.test(src);
-
-                      const width = isThumbnail ? 40 : 500;
-                      const height = isThumbnail ? 40 : 300;
-
-                      // Fallback to Image component with default dimensions
-                      return (
-                        <Image
-                          src={src}
-                          alt={alt || ''}
-                          width={width}
-                          height={height}
-                          className="inline-block align-middle"
-                        />
-                      );
-                    },
-                  }}
+                <div
+                  className={cn(
+                    'prose prose-sm max-w-prose break-words leading-tight md:prose-base',
+                    isUser
+                      ? 'prose-invert dark:prose-neutral'
+                      : 'prose-neutral dark:prose-invert',
+                  )}
                 >
-                  {processedContent}
-                </ReactMarkdown>
+                  <ReactMarkdown
+                    rehypePlugins={[rehypeRaw]}
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      a: ({ node, ...props }) => (
+                        <a
+                          {...props}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      ),
+                      img: ({ node, alt, src, ...props }) => {
+                        if (!src) return null;
+
+                        try {
+                          // Handle both relative and absolute URLs safely
+                          const url = new URL(src, 'http://dummy.com');
+                          const size = url.hash.match(/size=(\d+)x(\d+)/);
+
+                          if (size) {
+                            const [, width, height] = size;
+                            // Remove hash from src
+                            url.hash = '';
+                            return (
+                              <Image
+                                src={url.pathname + url.search}
+                                alt={alt || ''}
+                                width={Number(width)}
+                                height={Number(height)}
+                                className="inline-block align-middle"
+                              />
+                            );
+                          }
+                        } catch (e) {
+                          // If URL parsing fails, fallback to original src
+                          console.warn('Failed to parse image URL:', e);
+                        }
+
+                        const thumbnailPattern = /_thumb\.(png|jpg|jpeg|gif)$/i;
+                        const isThumbnail = thumbnailPattern.test(src);
+
+                        const width = isThumbnail ? 40 : 500;
+                        const height = isThumbnail ? 40 : 300;
+
+                        // Fallback to Image component with default dimensions
+                        return (
+                          <Image
+                            src={src}
+                            alt={alt || ''}
+                            width={width}
+                            height={height}
+                            className="inline-block align-middle"
+                          />
+                        );
+                      },
+                    }}
+                  >
+                    {processedContent}
+                  </ReactMarkdown>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {message.toolInvocations && (
             <MessageToolInvocations
@@ -717,7 +726,7 @@ export default function ChatInterface({
 
   useEffect(() => {
     scrollToBottom();
-  }, []);
+  }, [chatMessages]);
 
   const handleSend = async (value: string, attachments: Attachment[]) => {
     if (!value.trim() && (!attachments || attachments.length === 0)) {
@@ -750,7 +759,7 @@ export default function ChatInterface({
   useAnimationEffect();
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-[calc(100%-theme(spacing.16))] flex-col">
       <div className="no-scrollbar relative flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-3xl">
           <div className="space-y-4 px-4 pb-36 pt-4">

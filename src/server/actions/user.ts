@@ -158,6 +158,7 @@ export const verifyUser = actionClient.action<
     degenMode: boolean;
     publicKey?: string;
     privyId: string;
+    modelPreference?: string;
   }>
 >(async () => {
   const token = (await cookies()).get('privy-token')?.value;
@@ -176,6 +177,7 @@ export const verifyUser = actionClient.action<
         id: true,
         degenMode: true,
         privyId: true,
+        modelPreference: true,
         wallets: {
           select: {
             publicKey: true,
@@ -201,6 +203,7 @@ export const verifyUser = actionClient.action<
         privyId: user.privyId,
         publicKey: user.wallets[0]?.publicKey,
         degenMode: user.degenMode,
+        modelPreference: user.modelPreference ?? undefined,
       },
     };
   } catch {
@@ -314,6 +317,7 @@ export const getPrivyClient = actionClient.action(
 export type UserUpdateData = {
   degenMode?: boolean;
   referralCode?: string; // Add referralCode as an optional field
+  modelPreference?: string;
 };
 export async function updateUser(data: UserUpdateData) {
   try {
@@ -326,7 +330,7 @@ export async function updateUser(data: UserUpdateData) {
     }
 
     // Extract referralCode from the input data
-    const { referralCode, degenMode } = data;
+    const { referralCode, degenMode, modelPreference } = data;
 
     // If referralCode is provided, validate and update referringUserId
     if (referralCode) {
@@ -358,6 +362,7 @@ export async function updateUser(data: UserUpdateData) {
         where: { id: userId },
         data: {
           degenMode,
+          modelPreference: modelPreference,
           referringUserId: referringUser.id,
         },
       });
@@ -367,6 +372,7 @@ export async function updateUser(data: UserUpdateData) {
         where: { id: userId },
         data: {
           degenMode,
+          modelPreference,
         },
       });
     }

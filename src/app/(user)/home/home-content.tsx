@@ -11,9 +11,11 @@ import { Attachment, JSONValue } from 'ai';
 import { useChat } from 'ai/react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { mutate } from 'swr';
 import { v4 as uuidv4 } from 'uuid';
 
 import ChatInterface from '@/app/(user)/chat/[id]/chat-interface';
+import { ModelSelector } from '@/components/model-selector';
 import { SavedPromptsMenu } from '@/components/saved-prompts-menu';
 import { Badge } from '@/components/ui/badge';
 import BlurFade from '@/components/ui/blur-fade';
@@ -268,7 +270,6 @@ export function HomeContent() {
     }
   }, [pathname, resetChat]);
 
-  // 监听浏览器的前进后退
   useEffect(() => {
     const handlePopState = () => {
       if (location.pathname === '/home') {
@@ -390,6 +391,11 @@ export function HomeContent() {
 
       <div className="mx-auto w-full max-w-3xl space-y-8">
         <BlurFade delay={0.1}>
+          <ModelSelector
+            className="mb-4"
+            selectedModelId={user?.modelPreference ?? undefined}
+            mutate={() => mutate(`user-${user?.privyId}`)}
+          />
           <ConversationInput
             value={input}
             onChange={setInput}
@@ -687,6 +693,12 @@ export function HomeContent() {
             showChat ? 'opacity-100' : 'pointer-events-none opacity-0',
           )}
         >
+          <div className="my-2 flex w-full items-center justify-center md:ml-2 md:block">
+            <ModelSelector
+              selectedModelId={user?.modelPreference ?? undefined}
+              mutate={() => mutate(`user-${user?.privyId}`)}
+            />
+          </div>
           <ChatInterface id={chatId} initialMessages={messages} />
         </div>
       )}

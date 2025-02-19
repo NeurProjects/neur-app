@@ -5,6 +5,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 
 import { Card } from '@/components/ui/card';
+import { MODEL_PREFERENCE_MAP } from '@/lib/constants';
 
 import { actionTools } from './generic/action';
 import { jinaTools } from './generic/jina';
@@ -27,34 +28,46 @@ const usingAnthropic = !!process.env.ANTHROPIC_API_KEY;
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const claude35Sonnet = anthropic('claude-3-5-sonnet-20241022');
 
-const openai = createOpenAI({
-  baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-  apiKey: process.env.OPENAI_API_KEY,
-  compatibility: 'strict',
-  ...(process.env.OPENAI_BASE_URL?.includes('openrouter.ai') && {
-    fetch: async (url, options) => {
-      if (!options?.body) return fetch(url, options);
+const openai = (modelName: string) => {
+  const shouldOverrideFetch =
+    process.env.OPENAI_BASE_URL?.includes('openrouter.ai') &&
+    modelName.includes('anthropic');
+  return createOpenAI({
+    baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    apiKey: process.env.OPENAI_API_KEY,
+    compatibility: 'strict',
+    ...(shouldOverrideFetch && {
+      fetch: async (url, options) => {
+        if (!options?.body) return fetch(url, options);
 
-      const body = JSON.parse(options.body as string);
+        const body = JSON.parse(options.body as string);
 
-      const modifiedBody = {
-        ...body,
-        provider: {
-          order: ['Anthropic', 'OpenAI'],
-          allow_fallbacks: false,
-        },
-      };
+        const modifiedBody = {
+          ...body,
+          provider: {
+            order: ['Anthropic'],
+            allow_fallbacks: false,
+          },
+        };
 
-      options.body = JSON.stringify(modifiedBody);
+        options.body = JSON.stringify(modifiedBody);
 
-      return fetch(url, options);
-    },
-  }),
-});
+        return fetch(url, options);
+      },
+    }),
+  })(modelName);
+};
 
 export const orchestratorModel = openai('gpt-4o-mini');
 
 const openAiModel = openai(process.env.OPENAI_MODEL_NAME || 'gpt-4o');
+
+export const defaultModel = usingAnthropic ? claude35Sonnet : openAiModel;
+
+export const getModelFromPreference = (preference?: string) => {
+  if (!preference || !MODEL_PREFERENCE_MAP[preference]) return defaultModel;
+  return openai(preference);
+};
 
 export const defaultSystemPrompt = `
 Your name is Neur (Agent).
@@ -110,8 +123,6 @@ Common knowledge:
 Realtime knowledge:
 - { approximateCurrentTime: ${new Date().toISOString()}}
 `;
-
-export const defaultModel = usingAnthropic ? claude35Sonnet : openAiModel;
 
 export interface ToolConfig {
   displayName?: string;

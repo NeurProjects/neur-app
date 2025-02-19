@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { ModelSelector } from '@/components/model-selector';
 import { verifyUser } from '@/server/actions/user';
 import {
   dbGetConversation,
@@ -51,6 +52,7 @@ async function ChatData({ params }: { params: Promise<{ id: string }> }) {
   // Verify user authentication and access rights
   const authResponse = await verifyUser();
   const userId = authResponse?.data?.data?.id;
+  const modelPreference = authResponse?.data?.data?.modelPreference;
 
   // Check if user has access to private conversation
   if (
@@ -69,7 +71,14 @@ async function ChatData({ params }: { params: Promise<{ id: string }> }) {
     return notFound();
   }
 
-  return <ChatInterface id={id} initialMessages={messagesFromDB} />;
+  return (
+    <>
+      <div className="my-2 flex w-full items-center justify-center md:ml-2 md:block">
+        <ModelSelector selectedModelId={modelPreference ?? undefined} />
+      </div>
+      <ChatInterface id={id} initialMessages={messagesFromDB} />
+    </>
+  );
 }
 
 /**

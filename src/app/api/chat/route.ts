@@ -17,6 +17,7 @@ import {
   defaultModel,
   defaultSystemPrompt,
   defaultTools,
+  getModelFromPreference,
   getToolsFromRequiredTools,
 } from '@/ai/providers';
 import { MAX_TOKEN_MESSAGES } from '@/lib/constants';
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
   const userId = session?.data?.data?.id;
   const publicKey = session?.data?.data?.publicKey;
   const degenMode = session?.data?.data?.degenMode;
+  const modelPreference = session?.data?.data?.modelPreference;
 
   if (!userId) {
     return new Response('Unauthorized', { status: 401 });
@@ -193,7 +195,7 @@ export async function POST(req: Request) {
 
         // Begin streaming text from the model
         const result = streamText({
-          model: defaultModel,
+          model: getModelFromPreference(modelPreference),
           system: systemPrompt,
           tools: tools as Record<string, CoreTool<any, any>>,
           experimental_toolCallStreaming: true,

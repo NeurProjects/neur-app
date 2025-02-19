@@ -55,6 +55,7 @@ export type NeurUser = Pick<
   | 'subscription'
   | 'referralCode'
   | 'referringUserId'
+  | 'modelPreference'
 > & {
   privyUser: PrivyUser;
   hasEAP: boolean;
