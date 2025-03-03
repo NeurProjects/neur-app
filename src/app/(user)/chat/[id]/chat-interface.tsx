@@ -101,6 +101,14 @@ const TOOL_COMPONENTS: Record<
     component: DriftDeposit,
     displayName: '💰 Deposit to Drift',
   },
+  depositToDriftAccountWithParams: {
+    component: DriftDeposit,
+    displayName: '💰 Deposit to Drift',
+  },
+  createDriftAccountWithParams: {
+    component: DriftCard,
+    displayName: '👤 Create Drift Account',
+  },
   tradeDriftPerpAccount: {
     component: DriftPrepTrade,
     displayName: '🌊 Prep trade',

@@ -28,6 +28,8 @@ import { swapTokens } from './swap';
 import { allTelegramTools } from './telegram';
 import { transferTokens } from './transfer';
 import { allTwitterTools } from './twitter';
+import { depositToDriftAccountWithParams } from './drift/deposit-to-account-with-params';
+import { createDriftAccountWithParams } from './drift/create-account-with-params';
 
 interface ToolMetadata {
   description: string;
@@ -66,6 +68,8 @@ export const allTools: Record<string, ToolConfig> = {
   createDriftAccount: createDriftAccount(),
   getDriftAccountInfo: getDriftAccountInfo(),
   depositToDriftAccount: depositToDriftAccount(),
+  depositToDriftAccountWithParams: depositToDriftAccountWithParams(),
+  createDriftAccountWithParams: createDriftAccountWithParams(),
   getDriftAPY: getDriftAPY(),
   ...allMagicEdenTools,
   ...allChartTools,
