@@ -20,7 +20,7 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
-      - DIRECT_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
+      - DIRECT_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/neurdb
     volumes:
       - .:/usr/src/app
       - root_node_modules:/usr/src/app/node_modules
@@ -61,7 +61,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Changed to 5433 on host to avoid conflict
     volumes:
       - "neur-db-data:/var/lib/postgresql/data"
 
