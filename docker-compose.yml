@@ -1,4 +1,4 @@
-version: "3.8"
+---
 
 services:
   neur-app:
@@ -37,6 +37,7 @@ services:
         condition: service_healthy
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
+      - DIRECT_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
     expose:
       - "5555"
     ports:
