@@ -1,57 +1,58 @@
 ---
 
 services:
-  neur-app:
-    build:
-      context: .
-      dockerfile: Dockerfile.local
-      target: dev
-    container_name: "neur-app"
-    depends_on:
-      neur-db:
-        condition: service_healthy
-    expose:
-      - "3000"
-    ports:
-      - "3000:3000"
-    working_dir: /usr/src/app
-    command: "/bin/bash ./local_entrypoint.sh"
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
-      - DIRECT_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/neurdb
-    volumes:
-      - .:/usr/src/app
-      - root_node_modules:/usr/src/app/node_modules
-      - webapp_next:/usr/src/app/.next
+  # neur-app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.local
+  #     target: dev
+  #   container_name: "neur-app"
+  #   depends_on:
+  #     neur-db:
+  #       condition: service_healthy
+  #   expose:
+  #     - "3000"
+  #   ports:
+  #     - "3000:3000"
+  #   working_dir: /usr/src/app
+  #   command: "/bin/bash ./local_entrypoint.sh"
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
+  #     - DIRECT_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/neurdb
+  #   volumes:
+  #     - .:/usr/src/app
+  #     - root_node_modules:/usr/src/app/node_modules
+  #     - webapp_next:/usr/src/app/.next
 
-  neur-studio:
-    build:
-      context: .
-      dockerfile: Dockerfile.local
-      target: dev
-    container_name: "neur-studio"
-    depends_on:
-      neur-db:
-        condition: service_healthy
-    environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
-      - DIRECT_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
-    expose:
-      - "5555"
-    ports:
-      - "5555:5555"
-    working_dir: /usr/src/app
-    command: "pnpm npx prisma studio"
-    volumes:
-      - .:/usr/src/app
-      - root_node_modules:/usr/src/app/node_modules
-      - webapp_next:/usr/src/app/.next
+  # neur-studio:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.local
+  #     target: dev
+  #   container_name: "neur-studio"
+  #   depends_on:
+  #     neur-db:
+  #       condition: service_healthy
+  #   environment:
+  #     - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
+  #     - DIRECT_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@neur-db:5432/neurdb
+  #   expose:
+  #     - "5555"
+  #   ports:
+  #     - "5555:5555"
+  #   working_dir: /usr/src/app
+  #   command: "pnpm npx prisma studio"
+  #   volumes:
+  #     - .:/usr/src/app
+  #     - root_node_modules:/usr/src/app/node_modules
+  #     - webapp_next:/usr/src/app/.next
 
   neur-db:
     image: "postgres:15"
     container_name: "neur-db"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
@@ -60,6 +61,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=neurdb
     ports:
       - "5433:5432"  # Changed to 5433 on host to avoid conflict
     volumes:
@@ -67,5 +69,6 @@ services:
 
 volumes:
   neur-db-data:
-  root_node_modules:
-  webapp_next:
+
+  # root_node_modules:
+  # webapp_next:
