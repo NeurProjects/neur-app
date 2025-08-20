@@ -26,7 +26,7 @@ import { solanaTools } from './solana/solana';
 const usingAnthropic = !!process.env.ANTHROPIC_API_KEY;
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const claude35Sonnet = anthropic('claude-3-5-sonnet-20241022');
+const claude35Sonnet = anthropic('claude-3-7-sonnet-20250219');
 
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
