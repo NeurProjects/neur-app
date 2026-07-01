@@ -72,61 +72,66 @@ const solscanGet = async <T>(
     }
   });
 
-  const response = await fetch(url, {
-    next: { revalidate: 60 },
-    headers: {
-      accept: 'application/json',
-      token: apiKey,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
 
-  if (!response.ok) {
-    throw new Error(`Solscan request failed with ${response.status}`);
+  try {
+    const response = await fetch(url, {
+      next: { revalidate: 60 },
+      headers: {
+        accept: 'application/json',
+        token: apiKey,
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Solscan request failed with ${response.status}`);
+    }
+
+    const parsedResponse = solscanResponseSchema.safeParse(
+      await response.json(),
+    );
+
+    if (!parsedResponse.success) {
+      throw new Error('Solscan request failed');
+    }
+
+    const parsed = parsedResponse.data;
+
+    if (!parsed.success) {
+      throw new Error(parsed.errors?.message || 'Solscan request failed');
+    }
+
+    return parsed.data as T;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const parsed = solscanResponseSchema.parse(await response.json());
-
-  if (!parsed.success) {
-    throw new Error(parsed.errors?.message || 'Solscan request failed');
-  }
-
-  return parsed.data as T;
 };
 
 export const getSolscanAccountTransactions = cache(
-  async ({
-    address,
-    before,
+  async (
+    address: string,
+    before?: string,
     limit = 10,
-  }: {
-    address: string;
-    before?: string;
-    limit?: number;
-  }): Promise<SolscanAccountTransaction[]> => {
+  ): Promise<SolscanAccountTransaction[]> => {
     return solscanGet<SolscanAccountTransaction[]>('/account/transactions', {
       address,
       before,
-      limit: Math.max(10, Math.min(limit, 40)),
+      limit: Math.min(Math.max(limit, 1), 40),
     });
   },
 );
 
 export const getSolscanAccountDefiActivities = cache(
-  async ({
-    address,
-    fromTime,
+  async (
+    address: string,
+    fromTime?: number,
     page = 1,
     pageSize = 10,
-    platform,
-    toTime,
-  }: {
-    address: string;
-    fromTime?: number;
-    page?: number;
-    pageSize?: number;
-    platform?: string;
-    toTime?: number;
-  }): Promise<SolscanDefiActivity[]> => {
+    platform?: string,
+    toTime?: number,
+  ): Promise<SolscanDefiActivity[]> => {
     return solscanGet<SolscanDefiActivity[]>('/account/defi/activities', {
       address,
       from_time: fromTime,
@@ -141,11 +146,7 @@ export const getSolscanAccountDefiActivities = cache(
 );
 
 export const getSolscanAccountPortfolio = cache(
-  async ({
-    address,
-  }: {
-    address: string;
-  }): Promise<SolscanAccountPortfolio> => {
+  async (address: string): Promise<SolscanAccountPortfolio> => {
     return solscanGet<SolscanAccountPortfolio>('/account/portfolio', {
       address,
     });

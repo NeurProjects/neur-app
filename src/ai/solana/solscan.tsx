@@ -57,6 +57,17 @@ const ErrorCard = ({ error }: { error?: string }) => (
   </Card>
 );
 
+const toolResultSchema = z.union([
+  z.object({
+    success: z.literal(true),
+    data: z.unknown(),
+  }),
+  z.object({
+    success: z.literal(false),
+    error: z.string().optional(),
+  }),
+]);
+
 const TransactionsTable = ({
   transactions,
 }: {
@@ -198,11 +209,16 @@ const PortfolioCard = ({
 };
 
 const renderResult = <T,>(raw: unknown, render: (data: T) => ReactNode) => {
-  const result = raw as { success: boolean; data?: T; error?: string };
-  if (!result.success || result.data === undefined) {
-    return <ErrorCard error={result.error} />;
+  const result = toolResultSchema.safeParse(raw);
+  if (!result.success) {
+    return <ErrorCard />;
   }
-  return render(result.data);
+
+  if (!result.data.success) {
+    return <ErrorCard error={result.data.error} />;
+  }
+
+  return render(result.data.data as T);
 };
 
 export const solscanTools = {
@@ -236,11 +252,11 @@ export const solscanTools = {
       limit?: number;
     }) => {
       try {
-        const transactions = await getSolscanAccountTransactions({
+        const transactions = await getSolscanAccountTransactions(
           address,
           before,
           limit,
-        });
+        );
         return { suppressFollowUp: true, success: true, data: transactions };
       } catch (error) {
         return {
@@ -302,14 +318,14 @@ export const solscanTools = {
       toTime?: number;
     }) => {
       try {
-        const activities = await getSolscanAccountDefiActivities({
+        const activities = await getSolscanAccountDefiActivities(
           address,
           fromTime,
           page,
           pageSize,
           platform,
           toTime,
-        });
+        );
         return { suppressFollowUp: true, success: true, data: activities };
       } catch (error) {
         return {
@@ -338,7 +354,7 @@ export const solscanTools = {
     }),
     execute: async ({ address }: { address: string }) => {
       try {
-        const portfolio = await getSolscanAccountPortfolio({ address });
+        const portfolio = await getSolscanAccountPortfolio(address);
         return { suppressFollowUp: true, success: true, data: portfolio };
       } catch (error) {
         return {
