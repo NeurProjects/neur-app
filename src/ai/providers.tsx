@@ -1,7 +1,5 @@
 import { ReactNode } from 'react';
 
-
-
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
@@ -12,8 +10,8 @@ import { actionTools } from './generic/action';
 import { jinaTools } from './generic/jina';
 import { telegramTools } from './generic/telegram';
 import { utilTools } from './generic/util';
-import { bundleTools } from './solana/bundle';
 import { birdeyeTools } from './solana/birdeye';
+import { bundleTools } from './solana/bundle';
 import { chartTools } from './solana/chart';
 import { cookietools } from './solana/cookie';
 import { definedTools } from './solana/defined-fi';
@@ -22,6 +20,7 @@ import { jupiterTools } from './solana/jupiter';
 import { magicEdenTools } from './solana/magic-eden';
 import { pumpfunTools } from './solana/pumpfun';
 import { solanaTools } from './solana/solana';
+import { solscanTools } from './solana/solscan';
 
 const usingAnthropic = !!process.env.ANTHROPIC_API_KEY;
 
@@ -154,6 +153,7 @@ export function DefaultToolResultRenderer({ result }: { result: unknown }) {
 export const defaultTools: Record<string, ToolConfig> = {
   ...actionTools,
   ...solanaTools,
+  ...solscanTools,
   ...definedTools,
   ...pumpfunTools,
   ...jupiterTools,
@@ -213,9 +213,9 @@ export const toolsets: Record<
       'Web scraping and content extraction tools for reading web pages and extracting content.',
   },
   defiTools: {
-    tools: ['solanaTools', 'dexscreenerTools'],
+    tools: ['solanaTools', 'dexscreenerTools', 'solscanTools'],
     description:
-      'Tools for interacting with DeFi protocols on Solana, including swaps, market data, token information and details.',
+      'Tools for interacting with DeFi protocols on Solana, including swaps, market data, token information, wallet activity, and Solscan analytics.',
   },
   traderTools: {
     tools: ['birdeyeTools'],
