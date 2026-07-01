@@ -85,13 +85,17 @@ const solscanGet = async <T>(
       signal: controller.signal,
     });
 
-    if (!response.ok) {
-      throw new Error(`Solscan request failed with ${response.status}`);
-    }
+    const body = await response.json().catch(() => undefined);
+    const parsedResponse = solscanResponseSchema.safeParse(body);
 
-    const parsedResponse = solscanResponseSchema.safeParse(
-      await response.json(),
-    );
+    if (!response.ok) {
+      throw new Error(
+        parsedResponse.success
+          ? parsedResponse.data.errors?.message ||
+            `Solscan request failed with ${response.status}`
+          : `Solscan request failed with ${response.status}`,
+      );
+    }
 
     if (!parsedResponse.success) {
       throw new Error('Solscan request failed');
